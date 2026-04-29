@@ -1,0 +1,383 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#mainContent"
+  - dialog:
+    - generic:
+      - generic:
+        - generic:
+          - heading [level=3]
+        - generic:
+          - generic:
+            - button "BAR"
+            - button "LINE"
+          - button "Close chart": ×
+      - img "Enlarged chart view"
+  - dialog:
+    - generic:
+      - generic:
+        - heading [level=3]
+        - button "Close evaluation criteria": ×
+  - status [ref=e3]: Analyzing…
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - img [ref=e8]
+        - generic [ref=e10]:
+          - generic [ref=e11]: Stock Analyzer
+          - generic [ref=e12]: Financial Intelligence
+      - generic [ref=e13]:
+        - button "Toggle language between English and Japanese" [ref=e14] [cursor=pointer]: EN / JA
+        - button "Toggle dark and light theme" [ref=e15] [cursor=pointer]:
+          - generic [ref=e16]: 🌙
+          - generic [ref=e17]: ☀️
+        - button "Export" [ref=e88] [cursor=pointer]
+        - button "New Analysis" [ref=e89] [cursor=pointer]
+  - main [ref=e18]:
+    - generic [ref=e91]:
+      - generic [ref=e95]:
+        - generic [ref=e96]:
+          - generic [ref=e97]: —
+          - generic [ref=e98]: ¥ JPY
+          - generic "成長・割安・品質を均等に評価する標準的アプローチ。最も一般的な機関投資家の基本形。" [ref=e99]: Balanced / GARP
+          - generic [ref=e101]: 製造・サービス
+        - heading "Untitled" [level=2] [ref=e102]
+      - generic [ref=e104]:
+        - tablist "Financial sections" [ref=e106]:
+          - button "Financial Analysis" [ref=e107] [cursor=pointer]
+          - button "Evaluation" [ref=e108] [cursor=pointer]
+        - generic [ref=e109]:
+          - navigation [ref=e111]:
+            - button "10-Year Analysis" [ref=e112] [cursor=pointer]
+            - button "Quarterly (2Y)" [ref=e113] [cursor=pointer]
+          - generic [ref=e114]:
+            - tablist "Analysis sections" [ref=e116]:
+              - tab "Analysis" [selected] [ref=e117] [cursor=pointer]
+              - tab "PBR Decomposition" [ref=e118] [cursor=pointer]
+              - tab "Time Series" [ref=e119] [cursor=pointer]
+              - tab "Custom" [ref=e120] [cursor=pointer]
+              - tab "Competitor Analysis" [ref=e121] [cursor=pointer]
+            - tabpanel [ref=e122]:
+              - img "Financial analysis header" [ref=e124]
+              - generic [ref=e125]:
+                - generic [ref=e126]:
+                  - heading "Performance" [level=3] [ref=e127]
+                  - generic [ref=e128]:
+                    - generic [ref=e129]:
+                      - generic [ref=e130]:
+                        - generic [ref=e131]: ⠿
+                        - generic [ref=e132]: ●
+                        - generic [ref=e133]:
+                          - paragraph [ref=e134]: ROE
+                          - paragraph [ref=e135]: "5Y: 92.0pt"
+                          - generic [ref=e136]: "Industry Avg: 8.3%"
+                          - button "?" [ref=e138] [cursor=pointer]
+                      - generic [ref=e139]:
+                        - generic [ref=e140]: 23.7%
+                        - generic [ref=e141]: ▸
+                    - generic [ref=e142]:
+                      - generic [ref=e143]:
+                        - generic [ref=e144]: ⠿
+                        - generic [ref=e145]: ▲
+                        - generic [ref=e146]:
+                          - paragraph [ref=e147]: ROA
+                          - paragraph [ref=e148]: "5Y: 17.8pt"
+                          - button "?" [ref=e150] [cursor=pointer]
+                      - generic [ref=e151]:
+                        - generic [ref=e152]: 7.2%
+                        - generic [ref=e153]: ▸
+                    - generic [ref=e154]:
+                      - generic [ref=e155]:
+                        - generic [ref=e156]: ⠿
+                        - generic [ref=e157]: ✕
+                        - generic [ref=e158]:
+                          - paragraph [ref=e159]: Dividend Yield
+                          - paragraph [ref=e160]: "5Y: -1.88pt"
+                          - button "?" [ref=e162] [cursor=pointer]
+                      - generic [ref=e163]:
+                        - generic [ref=e164]: 0.93%
+                        - generic [ref=e165]: ▸
+                    - generic [ref=e166]:
+                      - generic [ref=e167]:
+                        - generic [ref=e168]: ⠿
+                        - generic [ref=e169]: ●
+                        - generic [ref=e170]:
+                          - paragraph [ref=e171]: Payout Ratio
+                          - paragraph [ref=e172]: "5Y: 19.3pt"
+                          - button "?" [ref=e174] [cursor=pointer]
+                      - generic [ref=e175]:
+                        - generic [ref=e176]: 14.1%
+                        - generic [ref=e177]: ▸
+                - generic [ref=e178]:
+                  - heading "Growth & Profitability" [level=3] [ref=e179]
+                  - generic [ref=e180]:
+                    - generic [ref=e181]:
+                      - generic [ref=e182]:
+                        - generic [ref=e183]: ⠿
+                        - generic [ref=e184]: ●
+                        - generic [ref=e185]:
+                          - paragraph [ref=e186]: Revenue Trend
+                          - paragraph [ref=e187]: "5Y: 57.9%"
+                          - button "?" [ref=e189] [cursor=pointer]
+                      - generic [ref=e190]:
+                        - generic [ref=e191]: ¥4.4B
+                        - generic [ref=e192]: ▸
+                    - generic [ref=e193]:
+                      - generic [ref=e194]:
+                        - generic [ref=e195]: ⠿
+                        - generic [ref=e196]: ●
+                        - generic [ref=e197]:
+                          - paragraph [ref=e198]: EPS Trend
+                          - paragraph [ref=e199]: "5Y: 663.6%"
+                          - button "?" [ref=e201] [cursor=pointer]
+                      - generic [ref=e202]:
+                        - generic [ref=e203]: ¥5.0
+                        - generic [ref=e204]: ▸
+                    - generic [ref=e205]:
+                      - generic [ref=e206]:
+                        - generic [ref=e207]: ⠿
+                        - generic [ref=e208]: ●
+                        - generic [ref=e209]:
+                          - paragraph [ref=e210]: EBITDA Margin
+                          - paragraph [ref=e211]: "5Y: 15.3pt"
+                          - generic [ref=e212]: "Industry Avg: 7.5%"
+                          - button "?" [ref=e214] [cursor=pointer]
+                      - generic [ref=e215]:
+                        - generic [ref=e216]: 7.5%
+                        - generic [ref=e217]: ▸
+                    - generic [ref=e218]:
+                      - generic [ref=e219]:
+                        - generic [ref=e220]: ⠿
+                        - generic [ref=e221]: ●
+                        - generic [ref=e222]:
+                          - paragraph [ref=e223]: Operating Margin
+                          - paragraph [ref=e224]: "5Y: 16.2pt"
+                          - generic [ref=e225]: "Industry Avg: 5.0%"
+                          - button "?" [ref=e227] [cursor=pointer]
+                      - generic [ref=e228]:
+                        - generic [ref=e229]: 6.6%
+                        - generic [ref=e230]: ▸
+                - generic [ref=e231]:
+                  - heading "Financial Health" [level=3] [ref=e232]
+                  - generic [ref=e233]:
+                    - generic [ref=e234]:
+                      - generic [ref=e235]:
+                        - generic [ref=e236]: ⠿
+                        - generic [ref=e237]: ●
+                        - generic [ref=e238]:
+                          - paragraph [ref=e239]: Equity Ratio
+                          - paragraph [ref=e240]: "5Y: 22.1pt"
+                          - generic [ref=e241]: "Industry Avg: 62.8%"
+                          - button "?" [ref=e243] [cursor=pointer]
+                      - generic [ref=e244]:
+                        - generic [ref=e245]: 77.6%
+                        - generic [ref=e246]: ▸
+                    - generic [ref=e247]:
+                      - generic [ref=e248]:
+                        - generic [ref=e249]: ⠿
+                        - generic [ref=e250]: ▲
+                        - generic [ref=e251]:
+                          - paragraph [ref=e252]: Quick Ratio
+                          - paragraph [ref=e253]: "5Y: -1579.8pt"
+                          - button "?" [ref=e255] [cursor=pointer]
+                      - generic [ref=e256]:
+                        - generic [ref=e257]: 93.8%
+                        - generic [ref=e258]: ▸
+                    - generic [ref=e259]:
+                      - generic [ref=e260]:
+                        - generic [ref=e261]: ⠿
+                        - generic [ref=e262]: ▲
+                        - generic [ref=e263]:
+                          - paragraph [ref=e264]: Current Ratio
+                          - paragraph [ref=e265]: "5Y: 16.4pt"
+                          - button "?" [ref=e267] [cursor=pointer]
+                      - generic [ref=e268]:
+                        - generic [ref=e269]: 93.8%
+                        - generic [ref=e270]: ▸
+                - generic [ref=e271]:
+                  - heading "Valuation & Risk" [level=3] [ref=e272]
+                  - generic [ref=e273]:
+                    - generic [ref=e274]:
+                      - generic [ref=e275]:
+                        - generic [ref=e276]: ⠿
+                        - generic [ref=e277]: ●
+                        - generic [ref=e278]:
+                          - paragraph [ref=e279]: P/E Ratio
+                          - paragraph [ref=e280]: "Range: 4.6–57.5"
+                          - generic [ref=e281]: "Industry Avg: 22.98x"
+                          - button "?" [ref=e283] [cursor=pointer]
+                      - generic [ref=e284]:
+                        - generic [ref=e285]: 15.1x
+                        - generic [ref=e286]: ▸
+                    - generic [ref=e287]:
+                      - generic [ref=e288]:
+                        - generic [ref=e289]: ⠿
+                        - generic [ref=e290]: ▲
+                        - generic [ref=e291]:
+                          - paragraph [ref=e292]: P/B Ratio
+                          - paragraph [ref=e293]: "Range: 0.23–3.86"
+                          - generic [ref=e294]: "Industry Avg: 1.54x"
+                          - button "?" [ref=e296] [cursor=pointer]
+                      - generic [ref=e297]:
+                        - generic [ref=e298]: 3.57x
+                        - generic [ref=e299]: ▸
+                    - generic [ref=e300]:
+                      - generic [ref=e301]:
+                        - generic [ref=e302]: ⠿
+                        - generic [ref=e303]: ●
+                        - generic [ref=e304]:
+                          - paragraph [ref=e305]: Net Debt / EBITDA
+                          - generic [ref=e306]: "Industry Avg: 3.13x"
+                          - button "?" [ref=e308] [cursor=pointer]
+                      - generic [ref=e309]:
+                        - generic [ref=e310]: "-2.76x"
+                        - generic [ref=e311]: ▸
+                    - generic [ref=e312]:
+                      - generic [ref=e313]:
+                        - generic [ref=e314]: ⠿
+                        - generic [ref=e315]: ●
+                        - generic [ref=e316]:
+                          - paragraph [ref=e317]: Debt/FCF
+                          - paragraph [ref=e318]: "5Y: -1.61"
+                          - button "?" [ref=e320] [cursor=pointer]
+                      - generic [ref=e321]:
+                        - generic [ref=e322]: "1.86"
+                        - generic [ref=e323]: ▸
+                    - generic [ref=e324]:
+                      - generic [ref=e325]:
+                        - generic [ref=e326]: ⠿
+                        - generic [ref=e327]: ✕
+                        - generic [ref=e328]:
+                          - paragraph [ref=e329]: EV/FCF
+                          - button "?" [ref=e331] [cursor=pointer]
+                      - generic [ref=e333]: "3015.71"
+                - generic [ref=e334]:
+                  - heading "ROIC / WACC" [level=3] [ref=e335]
+                  - generic [ref=e336]:
+                    - generic [ref=e337]:
+                      - generic [ref=e338]:
+                        - generic [ref=e339]: ⠿
+                        - generic [ref=e340]: ●
+                        - generic [ref=e341]:
+                          - paragraph [ref=e342]: ROIC
+                          - paragraph [ref=e343]: "5Y: 245.9pt"
+                          - generic [ref=e344]: "Industry Avg: 9.1%"
+                          - button "?" [ref=e346] [cursor=pointer]
+                      - generic [ref=e347]:
+                        - generic [ref=e348]: 39.9%
+                        - generic [ref=e349]: ▸
+                    - generic [ref=e350]:
+                      - generic [ref=e351]:
+                        - generic [ref=e352]: ⠿
+                        - generic [ref=e353]: ●
+                        - generic [ref=e354]:
+                          - paragraph [ref=e355]: WACC
+                          - button "?" [ref=e357] [cursor=pointer]
+                      - generic [ref=e359]: 6.7%
+                    - generic [ref=e360]:
+                      - generic [ref=e361]:
+                        - generic [ref=e362]: ⠿
+                        - generic [ref=e363]: ●
+                        - generic [ref=e364]:
+                          - paragraph [ref=e365]: ROIC vs WACC
+                          - button "?" [ref=e367] [cursor=pointer]
+                      - generic [ref=e369]: 33.2pt
+                  - heading "CCC Analysis" [level=3] [ref=e370]
+                  - generic [ref=e371]:
+                    - generic [ref=e372]:
+                      - generic [ref=e373]:
+                        - generic [ref=e374]: ⠿
+                        - generic [ref=e375]: ●
+                        - generic [ref=e376]:
+                          - paragraph [ref=e377]: CCC
+                          - button "?" [ref=e379] [cursor=pointer]
+                      - generic [ref=e381]: 4.0d
+                    - generic [ref=e382]:
+                      - generic [ref=e383]:
+                        - generic [ref=e384]: ⠿
+                        - generic [ref=e385]: —
+                        - generic [ref=e386]:
+                          - paragraph [ref=e387]: DSO
+                          - button "?" [ref=e389] [cursor=pointer]
+                      - generic [ref=e391]: 97.6d
+                    - generic [ref=e392]:
+                      - generic [ref=e393]:
+                        - generic [ref=e394]: ⠿
+                        - generic [ref=e395]: —
+                        - generic [ref=e396]:
+                          - paragraph [ref=e397]: DIO
+                          - button "?" [ref=e399] [cursor=pointer]
+                      - generic [ref=e401]: 0.0d
+                    - generic [ref=e402]:
+                      - generic [ref=e403]:
+                        - generic [ref=e404]: ⠿
+                        - generic [ref=e405]: —
+                        - generic [ref=e406]:
+                          - paragraph [ref=e407]: DPO
+                          - button "?" [ref=e409] [cursor=pointer]
+                      - generic [ref=e411]: 93.6d
+                - generic [ref=e412]:
+                  - heading "CF Analysis" [level=3] [ref=e413]
+                  - generic [ref=e414]:
+                    - generic [ref=e415]:
+                      - generic [ref=e416]:
+                        - generic [ref=e417]: ⠿
+                        - generic [ref=e418]: ●
+                        - generic [ref=e419]:
+                          - paragraph [ref=e420]: Operating CF Trend
+                          - paragraph [ref=e421]: "5Y: -211.5%"
+                          - button "?" [ref=e423] [cursor=pointer]
+                      - generic [ref=e424]:
+                        - generic [ref=e425]: ¥233.0M
+                        - generic [ref=e426]: ▸
+                    - generic [ref=e427]:
+                      - generic [ref=e428]:
+                        - generic [ref=e429]: ⠿
+                        - generic [ref=e430]: ▲
+                        - generic [ref=e431]:
+                          - paragraph [ref=e432]: Investing CF Trend
+                          - paragraph [ref=e433]: "5Y: -90.7%"
+                          - button "?" [ref=e435] [cursor=pointer]
+                      - generic [ref=e436]:
+                        - generic [ref=e437]: ¥5.3M
+                        - generic [ref=e438]: ▸
+                    - generic [ref=e439]:
+                      - generic [ref=e440]:
+                        - generic [ref=e441]: ⠿
+                        - generic [ref=e442]: ●
+                        - generic [ref=e443]:
+                          - paragraph [ref=e444]: Financing CF Trend
+                          - paragraph [ref=e445]: "5Y: 278.3%"
+                          - button "?" [ref=e447] [cursor=pointer]
+                      - generic [ref=e448]:
+                        - generic [ref=e449]: ¥-185.4M
+                        - generic [ref=e450]: ▸
+                    - generic [ref=e451]:
+                      - generic [ref=e452]:
+                        - generic [ref=e453]: ⠿
+                        - generic [ref=e454]: ✕
+                        - generic [ref=e455]:
+                          - paragraph [ref=e456]: FCF Trend
+                          - paragraph [ref=e457]: "5Y: -204.7%"
+                          - button "?" [ref=e459] [cursor=pointer]
+                      - generic [ref=e460]:
+                        - generic [ref=e461]: ¥225.9M
+                        - generic [ref=e462]: ▸
+                    - generic [ref=e463]:
+                      - generic [ref=e464]:
+                        - generic [ref=e465]: ⚠
+                        - generic [ref=e466]:
+                          - paragraph [ref=e467]: CF Pattern Result
+                          - paragraph [ref=e468]: "Ideal: OCF(+) ICF(-) FCF(-)"
+                      - generic [ref=e469]: Non-Ideal
+            - dialog "Select Metrics":
+              - generic:
+                - generic:
+                  - heading "Select Metrics" [level=3]
+                  - button "Close metric selection": ×
+                - generic:
+                  - button "Clear All"
+                  - button "Apply"
+  - contentinfo [ref=e84]:
+    - generic [ref=e85]:
+      - paragraph [ref=e86]: For informational purposes only. Not investment advice. Data accuracy not guaranteed. Invest at your own risk.
+      - button "View Terms" [ref=e87] [cursor=pointer]

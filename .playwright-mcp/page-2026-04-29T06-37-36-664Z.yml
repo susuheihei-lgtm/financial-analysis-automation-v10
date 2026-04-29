@@ -1,0 +1,100 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#mainContent"
+  - dialog:
+    - generic:
+      - generic:
+        - generic:
+          - heading [level=3]
+        - generic:
+          - generic:
+            - button "BAR"
+            - button "LINE"
+          - button "Close chart": ×
+      - img "Enlarged chart view"
+  - dialog:
+    - generic:
+      - generic:
+        - heading [level=3]
+        - button "Close evaluation criteria": ×
+  - status [ref=e3]
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - img [ref=e8]
+        - generic [ref=e10]:
+          - generic [ref=e11]: Stock Analyzer
+          - generic [ref=e12]: Financial Intelligence
+      - generic [ref=e13]:
+        - button "Toggle language between English and Japanese" [ref=e14] [cursor=pointer]: EN / JA
+        - button "Toggle dark and light theme" [ref=e15] [cursor=pointer]:
+          - generic [ref=e16]: 🌙
+          - generic [ref=e17]: ☀️
+  - main [ref=e18]:
+    - generic [ref=e20]:
+      - generic [ref=e21]:
+        - generic [ref=e22]: 00 / Financial Intelligence
+        - heading "Financial Analysis" [level=1] [ref=e23]
+        - paragraph [ref=e25]: Upload your financial data to generate a comprehensive investment analysis
+      - generic [ref=e26]:
+        - generic [ref=e27]: Ticker symbol
+        - generic [ref=e28]:
+          - generic [ref=e29]:
+            - textbox "Ticker symbol (e.g. 7203.T or AAPL)" [ref=e30]:
+              - /placeholder: 7203.T / AAPL…
+            - generic: TICKER
+          - button "Fetch & Analyze" [ref=e31] [cursor=pointer]
+      - generic [ref=e34]: or upload file
+      - button "Drop file here or click to browse for Excel or JSON file" [ref=e36] [cursor=pointer]:
+        - img [ref=e38]
+        - paragraph [ref=e40]: Drop file here or click to browse
+        - paragraph [ref=e41]: Excel (.xlsx) or JSON supported
+      - generic [ref=e42]:
+        - paragraph [ref=e43]: Investor Profile
+        - radiogroup "Investor Profile" [ref=e44]:
+          - radio "Balanced GARP" [checked] [ref=e45] [cursor=pointer]:
+            - img [ref=e47]
+            - generic [ref=e49]: Balanced
+            - generic [ref=e50]: GARP
+          - radio "Value Buffett / Graham" [ref=e51] [cursor=pointer]:
+            - img [ref=e53]
+            - generic [ref=e56]: Value
+            - generic [ref=e57]: Buffett / Graham
+          - radio "Growth Lynch / Fisher" [ref=e58] [cursor=pointer]:
+            - img [ref=e60]
+            - generic [ref=e63]: Growth
+            - generic [ref=e64]: Lynch / Fisher
+          - radio "Quality Fundsmith / Munger" [ref=e65] [cursor=pointer]:
+            - img [ref=e67]
+            - generic [ref=e70]: Quality
+            - generic [ref=e71]: Fundsmith / Munger
+          - radio "Income Dividend / GPIF" [ref=e72] [cursor=pointer]:
+            - img [ref=e74]
+            - generic [ref=e78]: Income
+            - generic [ref=e79]: Dividend / GPIF
+        - paragraph [ref=e80]: Balanced approach equally weighting growth, value, and quality. The most common institutional investor framework. (e.g. Wellington Management, Capital Group)
+      - generic [ref=e81]:
+        - button "Analyze" [disabled] [ref=e82]
+        - button "Demo" [ref=e83] [cursor=pointer]
+  - generic [ref=e85]:
+    - paragraph [ref=e86]: 00 / LEGAL NOTICE
+    - heading "Terms of Use & Disclaimer" [level=2] [ref=e87]
+    - generic [ref=e88]:
+      - paragraph [ref=e89]:
+        - text: This service is for
+        - strong [ref=e90]: informational purposes only
+        - text: and does not constitute investment advice, solicitation, or recommendation of any financial product.
+      - paragraph [ref=e91]:
+        - text: Financial data is sourced from third-party services (yfinance, SEC EDGAR, IR BANK, etc.). We make
+        - strong [ref=e92]: no warranty as to accuracy, completeness, or timeliness
+        - text: of the data.
+      - paragraph [ref=e93]:
+        - text: All investment decisions are made
+        - strong [ref=e94]: at your own risk
+        - text: . The operator bears no liability for any loss arising from use of this service.
+      - paragraph [ref=e95]: By continuing, you agree to these terms.
+    - button "Agree & Continue" [ref=e97] [cursor=pointer]
+  - contentinfo [ref=e98]:
+    - generic [ref=e99]:
+      - paragraph [ref=e100]: For informational purposes only. Not investment advice. Data accuracy not guaranteed. Invest at your own risk.
+      - button "View Terms" [ref=e101] [cursor=pointer]

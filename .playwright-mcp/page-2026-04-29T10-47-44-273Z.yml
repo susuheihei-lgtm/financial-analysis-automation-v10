@@ -1,0 +1,56 @@
+- generic [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#mainContent"
+  - dialog:
+    - generic:
+      - generic:
+        - generic:
+          - heading [level=3]
+        - generic:
+          - generic:
+            - button "BAR"
+            - button "LINE"
+          - button "Close chart": ×
+      - img "Enlarged chart view"
+  - dialog:
+    - generic:
+      - generic:
+        - heading [level=3]
+        - button "Close evaluation criteria": ×
+  - status [ref=e3]: Analyzing…
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - img [ref=e8]
+        - generic [ref=e10]:
+          - generic [ref=e11]: Stock Analyzer
+          - generic [ref=e12]: Financial Intelligence
+      - generic [ref=e13]:
+        - button "Toggle language between English and Japanese" [ref=e14] [cursor=pointer]: EN / JA
+        - button "Toggle dark and light theme" [ref=e15] [cursor=pointer]:
+          - generic [ref=e16]: 🌙
+          - generic [ref=e17]: ☀️
+        - button "Export" [ref=e88] [cursor=pointer]
+        - button "New Analysis" [ref=e89] [cursor=pointer]
+  - main [ref=e18]:
+    - generic [ref=e91]:
+      - generic [ref=e95]:
+        - generic [ref=e96]:
+          - generic [ref=e97]: —
+          - generic [ref=e98]: ¥ JPY
+          - generic "成長・割安・品質を均等に評価する標準的アプローチ。最も一般的な機関投資家の基本形。" [ref=e99]: Balanced / GARP
+          - generic [ref=e101]: 製造・サービス
+        - heading "Untitled" [level=2] [ref=e102]
+      - generic [ref=e104]:
+        - tablist "Financial sections" [ref=e106]:
+          - button "Financial Analysis" [active] [ref=e107] [cursor=pointer]
+          - button "Evaluation" [ref=e108] [cursor=pointer]
+        - generic [ref=e109]:
+          - navigation [ref=e111]:
+            - button "10-Year Analysis" [ref=e112] [cursor=pointer]
+            - button "Quarterly (2Y)" [ref=e113] [cursor=pointer]
+          - paragraph [ref=e543]: Quarterly data is only available for ticker-based analysis.
+  - contentinfo [ref=e84]:
+    - generic [ref=e85]:
+      - paragraph [ref=e86]: For informational purposes only. Not investment advice. Data accuracy not guaranteed. Invest at your own risk.
+      - button "View Terms" [ref=e87] [cursor=pointer]

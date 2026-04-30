@@ -596,8 +596,22 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Stock Price Chart (2/3) -->
           <div class="lg:col-span-2 th-bg-1 p-4 sm:p-6 border th-border" style="border-radius:0">
-            <h3 class="v0-section-label mb-4" data-i18n="Stock Price">Stock Price</h3>
-            <canvas id="chartStockPrice" role="img" aria-label="Stock price chart"></canvas>
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="v0-section-label" data-i18n="Stock Price">Stock Price</h3>
+              <div class="flex gap-1 flex-wrap" id="priceRangeBtns">
+                <button class="price-range-btn px-2 py-1 text-[9px] font-bold border transition-all" style="border-color:var(--border-s);border-radius:0;font-family:'IBM Plex Mono','Courier New',monospace" data-range="1M">1M</button>
+                <button class="price-range-btn px-2 py-1 text-[9px] font-bold border transition-all" style="border-color:var(--border-s);border-radius:0;font-family:'IBM Plex Mono','Courier New',monospace" data-range="3M">3M</button>
+                <button class="price-range-btn px-2 py-1 text-[9px] font-bold border transition-all" style="border-color:var(--border-s);border-radius:0;font-family:'IBM Plex Mono','Courier New',monospace" data-range="6M">6M</button>
+                <button class="price-range-btn price-range-active px-2 py-1 text-[9px] font-bold border transition-all" style="border-color:var(--accent-v0);color:var(--accent-v0);border-radius:0;font-family:'IBM Plex Mono','Courier New',monospace" data-range="1Y">1Y</button>
+                <button class="price-range-btn px-2 py-1 text-[9px] font-bold border transition-all" style="border-color:var(--border-s);border-radius:0;font-family:'IBM Plex Mono','Courier New',monospace" data-range="3Y">3Y</button>
+                <button class="price-range-btn px-2 py-1 text-[9px] font-bold border transition-all" style="border-color:var(--border-s);border-radius:0;font-family:'IBM Plex Mono','Courier New',monospace" data-range="5Y">5Y</button>
+                <button class="price-range-btn px-2 py-1 text-[9px] font-bold border transition-all" style="border-color:var(--border-s);border-radius:0;font-family:'IBM Plex Mono','Courier New',monospace" data-range="MAX">MAX</button>
+              </div>
+            </div>
+            <div style="position:relative">
+              <div id="priceTooltip" style="position:absolute;pointer-events:none;background:var(--bg-2);border:1px solid var(--border-s);padding:5px 8px;font-size:11px;font-family:'IBM Plex Mono',monospace;display:none;z-index:10;border-radius:0;white-space:nowrap;top:8px;left:16px"></div>
+              <canvas id="chartStockPrice" role="img" aria-label="Stock price chart"></canvas>
+            </div>
           </div>
           <!-- Analyst Panel (1/3) -->
           <div class="space-y-3">
@@ -651,7 +665,6 @@
                 <button class="tab-btn tab-active px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] border-b-2 transition-all duration-300 whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace" role="tab" aria-selected="true" aria-controls="tab-analysis" data-tab="analysis" data-i18n="Analysis">Analysis</button>
                 <button class="tab-btn px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] th-text-m border-b-2 border-transparent transition-all duration-300 whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace" role="tab" aria-selected="false" aria-controls="tab-roe" data-tab="roe" data-i18n="PBR Decomposition">PBR Decomposition</button>
                 <button class="tab-btn px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] th-text-m border-b-2 border-transparent transition-all duration-300 whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace" role="tab" aria-selected="false" aria-controls="tab-charts" data-tab="charts" data-i18n="Time Series">Time Series</button>
-                <button class="tab-btn px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] th-text-m border-b-2 border-transparent transition-all duration-300 whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace" role="tab" aria-selected="false" aria-controls="tab-custom" data-tab="custom" data-i18n="Custom">Custom</button>
                 <button class="tab-btn px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] th-text-m border-b-2 border-transparent transition-all duration-300 whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace" role="tab" aria-selected="false" aria-controls="tab-competitor" data-tab="competitor" data-i18n="Competitor Analysis">Competitor Analysis</button>
               </nav>
             </div>
@@ -667,7 +680,10 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div><h3 class="v0-section-label mb-5" data-i18n="Performance">Performance</h3><div id="perfItems" class="space-y-2"></div></div>
           <div><h3 class="v0-section-label mb-5" data-i18n="Growth & Profitability">Growth & Profitability</h3><div id="growthItems" class="space-y-2"></div></div>
-          <div><h3 class="v0-section-label mb-5" data-i18n="Financial Health">Financial Health</h3><div id="healthItems" class="space-y-2"></div></div>
+          <div>
+            <h3 class="v0-section-label mb-5" data-i18n="Financial Health">Financial Health</h3><div id="healthItems" class="space-y-2"></div>
+            <h3 class="v0-section-label mb-5 mt-8" data-i18n="Safety Metrics">Safety Metrics</h3><div id="safetyItems" class="space-y-2"></div>
+          </div>
           <div><h3 class="v0-section-label mb-5" data-i18n="Valuation & Risk">Valuation & Risk</h3><div id="valuationItems" class="space-y-2"></div></div>
           <div>
             <h3 class="v0-section-label mb-5" data-i18n="ROIC / WACC">ROIC / WACC</h3><div id="roicItems" class="space-y-2"></div>
@@ -725,18 +741,32 @@
       <div id="tab-charts" class="tab-content hidden" role="tabpanel" aria-labelledby="tab-charts-btn">
         <div class="flex items-center justify-between mb-6">
           <h3 class="v0-section-label" data-i18n="Time Series">Time Series</h3>
-          <div class="flex gap-2">
+          <div class="flex gap-2 flex-wrap">
             <button id="chartTypeLineBtn" class="chart-type-btn px-4 py-2 text-[10px] font-bold border transition-all" style="border-color:var(--border-s);border-radius:0;font-family:'IBM Plex Mono','Courier New',monospace" data-chart-type="line" aria-pressed="false" data-i18n="Line">Line</button>
             <button id="chartTypeBarBtn" class="chart-type-btn px-4 py-2 text-[10px] font-bold border transition-all" style="border-color:var(--border-s);border-radius:0;font-family:'IBM Plex Mono','Courier New',monospace" data-chart-type="bar" aria-pressed="true" data-i18n="Bar">Bar</button>
+            <button id="btnTsMetrics" class="px-4 py-2 text-[10px] font-bold border transition-all" style="border-color:var(--border-s);border-radius:0;font-family:'IBM Plex Mono','Courier New',monospace" data-i18n="Select Metrics (TS)">Select Metrics</button>
+            <button id="btnTsShowAll" class="hidden px-4 py-2 text-[10px] font-bold border transition-all" style="border-color:var(--border-s);border-radius:0;font-family:'IBM Plex Mono','Courier New',monospace" data-i18n="Show All">Show All</button>
           </div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Default charts (shown when no custom selection) -->
+        <div id="tsDefaultCharts" class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="th-bg-1 p-4 sm:p-6 border th-border" style="border-radius:0"><h4 class="font-plex-mono text-[9px] font-semibold uppercase tracking-[0.22em] th-text-m mb-4" data-i18n="Revenue">Revenue</h4><canvas id="chartRevenue" role="img" aria-label="Revenue time series chart"></canvas></div>
           <div class="th-bg-1 p-4 sm:p-6 border th-border" style="border-radius:0"><h4 class="font-plex-mono text-[9px] font-semibold uppercase tracking-[0.22em] th-text-m mb-4" data-i18n="Net Income">Net Income</h4><canvas id="chartNetIncome" role="img" aria-label="Net income time series chart"></canvas></div>
           <div class="th-bg-1 p-4 sm:p-6 border th-border" style="border-radius:0"><h4 class="font-plex-mono text-[9px] font-semibold uppercase tracking-[0.22em] th-text-m mb-4" data-i18n="Free Cash Flow">Free Cash Flow</h4><canvas id="chartFCF" role="img" aria-label="Free cash flow time series chart"></canvas></div>
           <div class="th-bg-1 p-4 sm:p-6 border th-border" style="border-radius:0"><h4 class="font-plex-mono text-[9px] font-semibold uppercase tracking-[0.22em] th-text-m mb-4" data-i18n="Earnings Per Share">Earnings Per Share</h4><canvas id="chartEPS" role="img" aria-label="Earnings per share time series chart"></canvas></div>
           <div class="th-bg-1 p-4 sm:p-6 border th-border" style="border-radius:0"><h4 class="font-plex-mono text-[9px] font-semibold uppercase tracking-[0.22em] th-text-m mb-4">ROE / ROA</h4><canvas id="chartROE" role="img" aria-label="ROE and ROA time series chart"></canvas></div>
           <div class="th-bg-1 p-4 sm:p-6 border th-border" style="border-radius:0"><h4 class="font-plex-mono text-[9px] font-semibold uppercase tracking-[0.22em] th-text-m mb-4" data-i18n="Balance Sheet">Balance Sheet</h4><canvas id="chartBS" role="img" aria-label="Balance sheet time series chart"></canvas></div>
+        </div>
+        <!-- Custom selected metrics area (shown when selection applied) -->
+        <div id="tsCustomCharts" class="hidden">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8" id="tsCustomCatGrid">
+            <div id="tsCat-performance" class="hidden"><h3 class="v0-section-label mb-5" data-i18n="Performance">Performance</h3><div class="ts-cat-items space-y-2"></div></div>
+            <div id="tsCat-growth" class="hidden"><h3 class="v0-section-label mb-5" data-i18n="Growth">Growth</h3><div class="ts-cat-items space-y-2"></div></div>
+            <div id="tsCat-profitability" class="hidden"><h3 class="v0-section-label mb-5" data-i18n="Profitability">Profitability</h3><div class="ts-cat-items space-y-2"></div></div>
+            <div id="tsCat-health" class="hidden"><h3 class="v0-section-label mb-5" data-i18n="Financial Health">Financial Health</h3><div class="ts-cat-items space-y-2"></div></div>
+            <div id="tsCat-valuation" class="hidden"><h3 class="v0-section-label mb-5" data-i18n="Valuation & Risk">Valuation & Risk</h3><div class="ts-cat-items space-y-2"></div></div>
+            <div id="tsCat-other" class="hidden"><h3 class="v0-section-label mb-5" data-i18n="Other">Other</h3><div class="ts-cat-items space-y-2"></div></div>
+          </div>
         </div>
       </div>
 
@@ -827,21 +857,64 @@
 
         </div><!-- /subtab-annual -->
 
-        <!-- subtab-quarterly: Quarterly Bar Charts (2年分析) -->
+        <!-- subtab-quarterly: 2年分析 -->
         <div id="subtab-quarterly" class="sub-tab-content hidden">
           <div id="quarterlyNoData" class="hidden text-center py-16">
             <p class="font-plex-mono text-[11px] th-text-m" data-i18n="quarterly-no-data">Quarterly data is only available for ticker-based analysis.</p>
           </div>
           <div id="quarterlyChartContent" class="hidden">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div class="th-bg-1 p-4 sm:p-6 border th-border" style="border-radius:0"><h4 class="font-plex-mono text-[9px] font-semibold uppercase tracking-[0.22em] th-text-m mb-4" data-i18n="Revenue">Revenue</h4><canvas id="chartQRevenue" role="img" aria-label="Quarterly revenue chart"></canvas></div>
-              <div class="th-bg-1 p-4 sm:p-6 border th-border" style="border-radius:0"><h4 class="font-plex-mono text-[9px] font-semibold uppercase tracking-[0.22em] th-text-m mb-4" data-i18n="Net Income">Net Income</h4><canvas id="chartQNetIncome" role="img" aria-label="Quarterly net income chart"></canvas></div>
-              <div class="th-bg-1 p-4 sm:p-6 border th-border" style="border-radius:0"><h4 class="font-plex-mono text-[9px] font-semibold uppercase tracking-[0.22em] th-text-m mb-4" data-i18n="Operating Income">Operating Income</h4><canvas id="chartQOpIncome" role="img" aria-label="Quarterly operating income chart"></canvas></div>
-              <div class="th-bg-1 p-4 sm:p-6 border th-border" style="border-radius:0"><h4 class="font-plex-mono text-[9px] font-semibold uppercase tracking-[0.22em] th-text-m mb-4">EBITDA</h4><canvas id="chartQEBITDA" role="img" aria-label="Quarterly EBITDA chart"></canvas></div>
-              <div class="th-bg-1 p-4 sm:p-6 border th-border" style="border-radius:0"><h4 class="font-plex-mono text-[9px] font-semibold uppercase tracking-[0.22em] th-text-m mb-4">EPS (Diluted)</h4><canvas id="chartQEPS" role="img" aria-label="Quarterly EPS chart"></canvas></div>
-              <div class="th-bg-1 p-4 sm:p-6 border th-border" style="border-radius:0"><h4 class="font-plex-mono text-[9px] font-semibold uppercase tracking-[0.22em] th-text-m mb-4" data-i18n="Gross Profit">Gross Profit</h4><canvas id="chartQGrossProfit" role="img" aria-label="Quarterly gross profit chart"></canvas></div>
-              <div class="th-bg-1 p-4 sm:p-6 border th-border" style="border-radius:0"><h4 class="font-plex-mono text-[9px] font-semibold uppercase tracking-[0.22em] th-text-m mb-4" data-i18n="Balance Sheet">Balance Sheet</h4><canvas id="chartQBS" role="img" aria-label="Quarterly balance sheet chart"></canvas></div>
-              <div class="th-bg-1 p-4 sm:p-6 border th-border" style="border-radius:0"><h4 class="font-plex-mono text-[9px] font-semibold uppercase tracking-[0.22em] th-text-m mb-4" data-i18n="Cash Flow">Cash Flow</h4><canvas id="chartQCF" role="img" aria-label="Quarterly cash flow chart"></canvas></div>
+            <!-- Q inner sub-tabs -->
+            <div class="mb-6 tab-nav-wrap">
+              <nav class="flex gap-0 border-b overflow-x-auto scrollbar-hide" id="qInnerTabNav" style="border-color:var(--border-s)">
+                <button class="q-inner-tab q-inner-active px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] border-b-2 transition-all whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace;border-color:var(--accent-v0)" data-qtab="ts">時系列分析</button>
+                <button class="q-inner-tab px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] th-text-m border-b-2 border-transparent transition-all whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace" data-qtab="roe">ROE分解（四半期）</button>
+                <button class="q-inner-tab px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] th-text-m border-b-2 border-transparent transition-all whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace" data-qtab="fs">財務諸表</button>
+              </nav>
+            </div>
+
+            <!-- Q sub-tab: 時系列 -->
+            <div id="qtab-ts" class="q-inner-content">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="v0-section-label">時系列分析</h3>
+                <div class="flex gap-2">
+                  <button id="qChartTypeBarBtn" class="q-chart-type-btn px-4 py-2 text-[10px] font-bold border transition-all" style="border-color:var(--accent-v0);color:var(--accent-v0);border-radius:0;font-family:'IBM Plex Mono','Courier New',monospace" data-qtype="bar">Bar</button>
+                  <button id="qChartTypeLineBtn" class="q-chart-type-btn px-4 py-2 text-[10px] font-bold border transition-all" style="border-color:var(--border-s);border-radius:0;font-family:'IBM Plex Mono','Courier New',monospace" data-qtype="line">Line</button>
+                </div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="th-bg-1 p-4 sm:p-6 border th-border" style="border-radius:0"><h4 class="font-plex-mono text-[9px] font-semibold uppercase tracking-[0.22em] th-text-m mb-4" data-i18n="Revenue">Revenue</h4><canvas id="chartQRevenue"></canvas></div>
+                <div class="th-bg-1 p-4 sm:p-6 border th-border" style="border-radius:0"><h4 class="font-plex-mono text-[9px] font-semibold uppercase tracking-[0.22em] th-text-m mb-4" data-i18n="Net Income">Net Income</h4><canvas id="chartQNetIncome"></canvas></div>
+                <div class="th-bg-1 p-4 sm:p-6 border th-border" style="border-radius:0"><h4 class="font-plex-mono text-[9px] font-semibold uppercase tracking-[0.22em] th-text-m mb-4" data-i18n="Operating Income">Operating Income</h4><canvas id="chartQOpIncome"></canvas></div>
+                <div class="th-bg-1 p-4 sm:p-6 border th-border" style="border-radius:0"><h4 class="font-plex-mono text-[9px] font-semibold uppercase tracking-[0.22em] th-text-m mb-4">EBITDA</h4><canvas id="chartQEBITDA"></canvas></div>
+                <div class="th-bg-1 p-4 sm:p-6 border th-border" style="border-radius:0"><h4 class="font-plex-mono text-[9px] font-semibold uppercase tracking-[0.22em] th-text-m mb-4">EPS (Diluted)</h4><canvas id="chartQEPS"></canvas></div>
+                <div class="th-bg-1 p-4 sm:p-6 border th-border" style="border-radius:0"><h4 class="font-plex-mono text-[9px] font-semibold uppercase tracking-[0.22em] th-text-m mb-4" data-i18n="Gross Profit">Gross Profit</h4><canvas id="chartQGrossProfit"></canvas></div>
+                <div class="th-bg-1 p-4 sm:p-6 border th-border" style="border-radius:0"><h4 class="font-plex-mono text-[9px] font-semibold uppercase tracking-[0.22em] th-text-m mb-4" data-i18n="Balance Sheet">Balance Sheet</h4><canvas id="chartQBS"></canvas></div>
+                <div class="th-bg-1 p-4 sm:p-6 border th-border" style="border-radius:0"><h4 class="font-plex-mono text-[9px] font-semibold uppercase tracking-[0.22em] th-text-m mb-4" data-i18n="Cash Flow">Cash Flow</h4><canvas id="chartQCF"></canvas></div>
+              </div>
+            </div>
+
+            <!-- Q sub-tab: ROE分解 -->
+            <div id="qtab-roe" class="q-inner-content hidden">
+              <div id="qRoeTree"></div>
+            </div>
+
+            <!-- Q sub-tab: 財務諸表 -->
+            <div id="qtab-fs" class="q-inner-content hidden">
+              <!-- PL sub-section -->
+              <div class="mb-8">
+                <h3 class="v0-section-label mb-4">損益計算書 (PL)</h3>
+                <div id="qFsPlTable" class="overflow-x-auto"></div>
+              </div>
+              <!-- BS sub-section -->
+              <div class="mb-8">
+                <h3 class="v0-section-label mb-4">貸借対照表 (BS)</h3>
+                <div id="qFsBsTable" class="overflow-x-auto"></div>
+              </div>
+              <!-- CF sub-section -->
+              <div class="mb-8">
+                <h3 class="v0-section-label mb-4">キャッシュフロー計算書</h3>
+                <div id="qFsCfTable" class="overflow-x-auto"></div>
+              </div>
             </div>
           </div>
         </div><!-- /subtab-quarterly -->
@@ -1262,6 +1335,24 @@
       'Financial Intelligence': { ja: 'ファイナンシャル・インテリジェンス', en: 'Financial Intelligence' },
       // PDF export
       'PDF export failed': { ja: 'PDFの出力に失敗しました。', en: 'PDF export failed.' },
+      // Safety Metrics
+      'Safety Metrics':       { ja: '安全性指標', en: 'Safety Metrics' },
+      'Interest Coverage':    { ja: 'インタレストカバレッジ', en: 'Interest Coverage' },
+      'Beta (β)':             { ja: 'ベータ (β)', en: 'Beta (β)' },
+      'ic-detail':            { ja: '支払利息カバー率 (EBIT/支払利息)', en: 'Interest coverage ratio (EBIT / Interest Expense)' },
+      'beta-detail':          { ja: 'β>1: 市場より高ボラ / β<1: 低ボラ', en: 'β>1: High vol vs market / β<1: Low vol' },
+      // Chart period range buttons
+      'MAX':                  { ja: '全期間', en: 'MAX' },
+      // Quarterly sub-tabs
+      'Time Series Analysis': { ja: '時系列分析', en: 'Time Series Analysis' },
+      'ROE Decomposition Q':  { ja: 'ROE分解（四半期）', en: 'ROE Decomposition' },
+      'Financial Statements': { ja: '財務諸表', en: 'Financial Statements' },
+      'Income Statement':     { ja: '損益計算書 (PL)', en: 'Income Statement (PL)' },
+      'Cash Flow Statement':  { ja: 'キャッシュフロー計算書', en: 'Cash Flow Statement' },
+      'Quarterly ROE':        { ja: '四半期ROE', en: 'Quarterly ROE' },
+      // Select Metrics in Time Series
+      'Select Metrics (TS)':  { ja: '指標を選択', en: 'Select Metrics' },
+      'Show All':             { ja: '全指標を表示', en: 'Show All' },
     };
 
     function t(key) {
@@ -1936,6 +2027,11 @@
       selectedMetrics.clear();
       $('customEmpty').classList.remove('hidden');
       $('customContent').classList.add('hidden');
+      // Reset Time Series tab to default view
+      const tsDefault = $('tsDefaultCharts'), tsCustom = $('tsCustomCharts'), tsShowAll = $('btnTsShowAll');
+      if (tsDefault) tsDefault.classList.remove('hidden');
+      if (tsCustom) tsCustom.classList.add('hidden');
+      if (tsShowAll) tsShowAll.classList.add('hidden');
       window.scrollTo(0, 0);
 
       // Set data scaling flags from timeseries metadata
@@ -2064,6 +2160,21 @@
         makeItemCard(t('流動比率'), qCr['評価'], fmtNum(qCr['現在値'],1,'%'), fmt5Y(qCr['5年変化pt'],1,'pt'), 'current_ratio', (s['C-4_流動比率']||{})['基準']),
       ].join('');
 
+      // Safety Metrics (Interest Coverage, Beta)
+      const tsd = data.timeseries || {};
+      const tsOpIncome = tsd.op_income; const tsIntExp = tsd.interest_exp;
+      const opInc0 = Array.isArray(tsOpIncome) ? tsOpIncome[0] : null;
+      const intExp0 = Array.isArray(tsIntExp) ? tsIntExp[0] : null;
+      let intCov = (opInc0 != null && intExp0 != null && intExp0 !== 0) ? Math.abs(opInc0 / intExp0) : null;
+      const intCovGrade = intCov == null ? null : intCov >= 10 ? '◎' : intCov >= 5 ? '○' : intCov >= 2 ? '▲' : '×';
+      const betaVal = tsd._beta != null ? tsd._beta : null;
+      const betaGrade = betaVal == null ? null : betaVal > 2 ? '×' : betaVal > 1.5 ? '▲' : betaVal > 1.0 ? '○' : '◎';
+      const safetyEl = $('safetyItems');
+      if (safetyEl) safetyEl.innerHTML = [
+        makeItemCard(t('Interest Coverage'), intCovGrade, intCov != null ? fmtNum(intCov,1,'x') : '—', t('ic-detail')),
+        betaVal != null ? makeItemCard(t('Beta (β)'), betaGrade, fmtNum(betaVal,2), t('beta-detail')) : '',
+      ].filter(Boolean).join('');
+
       // Growth & Profitability
       const b1 = s['B-1_売上高CAGR']||{}, b2 = s['B-2_EBITDAマージン']||{}, b3 = s['B-3_営業利益率']||{}, b4 = s['B-4_EPS成長率']||{};
       const qRev = q['売上高推移']||{}, qFcf = q['FCF推移']||{}, qEps = q['EPS推移']||{};
@@ -2077,13 +2188,16 @@
       // Valuation & Risk (from screening C + quantitative risk)
       const c1 = s['C-1_PER']||{}, c2 = s['C-2_PBR']||{}, c3 = s['C-3_NetDebt_EBITDA']||{}, c4 = s['C-4_流動比率']||{};
       const qDfc = q['Debt/FCF']||{}, qEvf = q['EV/FCF']||{};
+      const betaValV = (data.timeseries || {})._beta;
+      const betaGradeV = betaValV == null ? null : betaValV > 2 ? '×' : betaValV > 1.5 ? '▲' : betaValV > 1.0 ? '○' : '◎';
       $('valuationItems').innerHTML = [
         makeItemCard(t('P/E Ratio'), c1['判定'], fmtNum(c1['実績値'],1,'x'), `${t('Range:')} ${c1['閾値_下限']}–${c1['閾値_上限']}`, 'pe_ratio', c1['基準']),
         makeItemCard(t('P/B Ratio'), c2['判定'], fmtNum(c2['実績値'],2,'x'), `${t('Range:')} ${c2['閾値_下限']}–${c2['閾値_上限']}`, 'pb_ratio', c2['基準']),
         makeItemCard(t('Net Debt / EBITDA'), c3['判定'], fmtNum(c3['実績値'],2,'x'), '', 'nd_ebitda', c3['基準']),
         makeItemCard('Debt/FCF', qDfc['評価'], fmtNum(qDfc['現在値'],2), fmt5Y((q['Debt/FCF_detail']||{})['5年変化'],2,''), 'debt_fcf'),
         makeItemCard('EV/FCF', qEvf['評価'], fmtNum(qEvf['現在値'],2), ''),
-      ].join('');
+        betaValV != null ? makeItemCard(t('Beta (β)'), betaGradeV, fmtNum(betaValV,2), t('beta-detail')) : '',
+      ].filter(Boolean).join('');
 
       // ROIC / WACC
       $('roicItems').innerHTML = ['ROIC','WACC','ROIC_vs_WACC'].map(k => {
@@ -2767,20 +2881,62 @@
 
     // ── Stock Price Chart ─────────────────────────────────────────────────────
     let stockPriceChart = null;
-    function renderStockPriceChart(ts) {
+    let stockPriceRange = '1Y';
+    let stockPriceAllDates = [], stockPriceAllPrices = [];
+
+    function filterStockPriceByRange(dates, prices, range) {
+      if (range === 'MAX' || !dates.length) return { dates, prices };
+      const now = new Date(dates[dates.length - 1]);
+      const monthsMap = { '1M': 1, '3M': 3, '6M': 6, '1Y': 12, '3Y': 36, '5Y': 60 };
+      const months = monthsMap[range] || 12;
+      const cutoff = new Date(now);
+      cutoff.setMonth(cutoff.getMonth() - months);
+      const fd = [], fp = [];
+      dates.forEach((d, i) => { if (new Date(d) >= cutoff) { fd.push(d); fp.push(prices[i]); } });
+      return { dates: fd, prices: fp };
+    }
+
+    function renderStockPriceChart(ts, range) {
       if (stockPriceChart) { stockPriceChart.destroy(); stockPriceChart = null; }
       const canvas = $('chartStockPrice');
       if (!canvas) return;
-      const dates = ts.price_monthly_dates || [];
-      const prices = ts.price_monthly || [];
-      if (!dates.length || !prices.length) { canvas.parentElement.style.display = 'none'; return; }
-      canvas.parentElement.style.display = '';
+      const allDates = ts.price_monthly_dates || [];
+      const allPrices = ts.price_monthly || [];
+      stockPriceAllDates = allDates;
+      stockPriceAllPrices = allPrices;
+      if (!allDates.length || !allPrices.length) { canvas.closest('.lg\\:col-span-2').style.display = 'none'; return; }
+      canvas.closest('.lg\\:col-span-2').style.display = '';
+
+      const activeRange = range || stockPriceRange;
+      const { dates, prices } = filterStockPriceByRange(allDates, allPrices, activeRange);
+
       const cs = getComputedStyle(document.documentElement);
       const chartText = cs.getPropertyValue('--chart-text').trim();
       const chartGridY = cs.getPropertyValue('--chart-grid-y').trim();
       Chart.defaults.color = chartText;
+
+      const tooltipEl = $('priceTooltip');
+
+      const crosshairPlugin = {
+        id: 'crosshair',
+        afterDraw(chart) {
+          if (chart._crosshairX == null) return;
+          const { ctx, chartArea: { top, bottom } } = chart;
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(chart._crosshairX, top);
+          ctx.lineTo(chart._crosshairX, bottom);
+          ctx.strokeStyle = 'rgba(212,133,42,0.5)';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([4, 3]);
+          ctx.stroke();
+          ctx.restore();
+        },
+      };
+
       stockPriceChart = new Chart(canvas, {
         type: 'line',
+        plugins: [crosshairPlugin],
         data: { labels: dates, datasets: [{
           label: t('Stock Price'), data: prices,
           borderColor: '#D4852A', backgroundColor: 'rgba(212,133,42,0.06)',
@@ -2790,16 +2946,54 @@
           responsive: true, maintainAspectRatio: true,
           plugins: {
             legend: { display: false },
-            tooltip: { callbacks: { label: ctx => smartFormat(ctx.parsed.y) } },
+            tooltip: { enabled: false },
           },
           scales: {
             x: { grid: { display: false }, ticks: { font: { size: 9 }, color: chartText, maxTicksLimit: 12, maxRotation: 0 } },
             y: { grid: { color: chartGridY }, ticks: { font: { size: 9 }, color: chartText, callback: v => smartFormat(v) }, position: 'right' },
           },
           elements: { line: { tension: 0 } },
+          onHover: (e, active, chart) => {
+            const points = chart.getElementsAtEventForMode(e.native, 'index', { intersect: false }, false);
+            if (points.length && tooltipEl) {
+              const pt = points[0];
+              chart._crosshairX = pt.element.x;
+              chart.draw();
+              const label = chart.data.labels[pt.index];
+              const val = chart.data.datasets[0].data[pt.index];
+              const sym = currentCurrencySymbol || '';
+              tooltipEl.textContent = `${label}  ${sym}${smartFormat(val)}`;
+              tooltipEl.style.display = 'block';
+            } else {
+              chart._crosshairX = null;
+              if (tooltipEl) tooltipEl.style.display = 'none';
+              if (chart.canvas) chart.draw();
+            }
+          },
         },
       });
+
+      canvas.addEventListener('mouseleave', () => {
+        if (stockPriceChart) { stockPriceChart._crosshairX = null; stockPriceChart.draw(); }
+        if (tooltipEl) tooltipEl.style.display = 'none';
+      });
     }
+
+    // Period range button handler
+    document.querySelectorAll('.price-range-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        stockPriceRange = btn.dataset.range;
+        document.querySelectorAll('.price-range-btn').forEach(b => {
+          b.classList.remove('price-range-active');
+          b.style.borderColor = 'var(--border-s)';
+          b.style.color = '';
+        });
+        btn.classList.add('price-range-active');
+        btn.style.borderColor = 'var(--accent-v0)';
+        btn.style.color = 'var(--accent-v0)';
+        if (stockPriceAllDates.length) renderStockPriceChart({ price_monthly_dates: stockPriceAllDates, price_monthly: stockPriceAllPrices }, stockPriceRange);
+      });
+    });
 
     // ── Analyst Breakdown Bars & Price Target ────────────────────────────────
     function renderAnalystPanel(data) {
@@ -2854,8 +3048,41 @@
 
     // ── Quarterly Charts (2年分析) ─────────────────────────────────────────────
     let qCharts = {};
+    let qChartType = 'bar';
+    let lastQTs = null;
+
+    // Q inner sub-tab navigation
+    document.querySelectorAll('.q-inner-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.q-inner-tab').forEach(b => {
+          b.classList.remove('q-inner-active');
+          b.style.borderColor = 'transparent'; b.style.color = '';
+        });
+        btn.classList.add('q-inner-active');
+        btn.style.borderColor = 'var(--accent-v0)'; btn.style.color = 'var(--accent-v0)';
+        document.querySelectorAll('.q-inner-content').forEach(c => c.classList.add('hidden'));
+        const target = $('qtab-' + btn.dataset.qtab);
+        if (target) target.classList.remove('hidden');
+      });
+    });
+
+    // Q bar/line toggle
+    document.querySelectorAll('.q-chart-type-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const type = btn.dataset.qtype;
+        if (type === qChartType) return;
+        qChartType = type;
+        document.querySelectorAll('.q-chart-type-btn').forEach(b => {
+          b.style.borderColor = b.dataset.qtype === type ? 'var(--accent-v0)' : 'var(--border-s)';
+          b.style.color = b.dataset.qtype === type ? 'var(--accent-v0)' : '';
+        });
+        if (lastQTs) renderQuarterlyCharts(lastQTs);
+      });
+    });
+
     function renderQuarterlyCharts(ts) {
       const q = ts && ts.quarterly;
+      lastQTs = ts;
       const noDataEl = $('quarterlyNoData');
       const contentEl = $('quarterlyChartContent');
       Object.values(qCharts).forEach(c => c.destroy()); qCharts = {};
@@ -2874,6 +3101,7 @@
       const chartGridY = cs.getPropertyValue('--chart-grid-y').trim();
       Chart.defaults.color = chartText;
 
+      const isLine = qChartType === 'line';
       const opts = {
         responsive: true, maintainAspectRatio: true,
         plugins: {
@@ -2884,6 +3112,7 @@
           x: { grid: { display: false }, ticks: { font: { size: 9 }, color: chartText, maxRotation: 45 } },
           y: { grid: { color: chartGridY }, ticks: { font: { size: 9 }, color: chartText, callback: v => smartFormat(v) } },
         },
+        elements: isLine ? { point: { radius: 3, hoverRadius: 5 }, line: { tension: 0, borderWidth: 2 } } : {},
       };
 
       function qBarColors(data, posColor) {
@@ -2891,16 +3120,17 @@
       }
       function qCreateChart(id, label, data, color) {
         const el = $(id); if (!el) return;
-        qCharts[id] = new Chart(el, {
-          type: 'bar', plugins: [makeZeroPlugin()],
-          data: { labels: dates, datasets: [{ label, data, backgroundColor: qBarColors(data, color), borderColor: 'transparent', borderWidth: 0, borderRadius: 0 }] },
-          options: opts,
-        });
+        const dataset = isLine
+          ? { label, data, borderColor: color, backgroundColor: color + '18', fill: true, borderWidth: 2, pointRadius: 3, tension: 0 }
+          : { label, data, backgroundColor: qBarColors(data, color), borderColor: 'transparent', borderWidth: 0, borderRadius: 0 };
+        qCharts[id] = new Chart(el, { type: qChartType, plugins: [makeZeroPlugin()], data: { labels: dates, datasets: [dataset] }, options: opts });
       }
       function qMultiChart(id, datasets) {
         const el = $(id); if (!el) return;
-        const ds = datasets.map(d => ({ ...d, backgroundColor: qBarColors(d.data, d.borderColor.slice(0,7)), borderColor: 'transparent', fill: false, borderWidth: 0, pointRadius: 0 }));
-        qCharts[id] = new Chart(el, { type: 'bar', plugins: [makeZeroPlugin()], data: { labels: dates, datasets: ds }, options: opts });
+        const ds = datasets.map(d => isLine
+          ? { ...d, backgroundColor: d.borderColor + '18', fill: false, borderWidth: 2, pointRadius: 3, tension: 0 }
+          : { ...d, backgroundColor: qBarColors(d.data, d.borderColor.slice(0,7)), borderColor: 'transparent', fill: false, borderWidth: 0, pointRadius: 0 });
+        qCharts[id] = new Chart(el, { type: qChartType, plugins: [makeZeroPlugin()], data: { labels: dates, datasets: ds }, options: opts });
       }
 
       const inc = q.income || {}, bal = q.balance || {}, cf = q.cashflow || {};
@@ -2920,6 +3150,161 @@
         { label: 'FCF',       data: rev(cf['Free Cash Flow']),      borderColor: '#22c55e' },
         { label: 'CapEx',     data: rev(cf['Capital Expenditure']), borderColor: '#ef4444' },
       ]);
+
+      renderQuarterlyROETree(q);
+      renderQuarterlyFinancialStatements(q);
+    }
+
+    // ── Quarterly ROE Decomposition (DuPont) ─────────────────────────────────
+    let qRoeCharts = {};
+    function renderQuarterlyROETree(q) {
+      const el = $('qRoeTree');
+      if (!el) return;
+      Object.values(qRoeCharts).forEach(c => c.destroy()); qRoeCharts = {};
+
+      const rev = arr => Array.isArray(arr) ? arr.slice().reverse() : arr;
+      const inc = q.income || {}, bal = q.balance || {};
+      const dates = q.dates.slice().reverse().map(d => d.slice(0, 7));
+
+      const ni   = rev(inc['Net Income'])           || [];
+      const rev_ = rev(inc['Total Revenue'])        || [];
+      const ta   = rev(bal['Total Assets'])         || [];
+      const eq   = rev(bal['Stockholders Equity'])  || [];
+
+      const safe = (a, b) => (a != null && b != null && b !== 0) ? a / b : null;
+      const pct  = arr => arr.map(v => v != null ? v * 100 : null);
+
+      const roe    = ni.map((v, i) => safe(v, eq[i]) != null ? safe(v, eq[i]) * 100 : null);
+      const npm    = ni.map((v, i) => rev_[i] ? (v / rev_[i]) * 100 : null);
+      const at     = rev_.map((v, i) => ta[i] ? v / ta[i] : null);
+      const lev    = ta.map((v, i) => eq[i] ? v / eq[i] : null);
+
+      const cs = getComputedStyle(document.documentElement);
+      const chartText = cs.getPropertyValue('--chart-text').trim();
+      const chartGridY = cs.getPropertyValue('--chart-grid-y').trim();
+
+      const latestROE = roe.filter(v => v != null).slice(-1)[0];
+      const latestNPM = npm.filter(v => v != null).slice(-1)[0];
+      const latestAT  = at.filter(v => v != null).slice(-1)[0];
+      const latestLev = lev.filter(v => v != null).slice(-1)[0];
+
+      function qMiniChart(canvasId, data, color, pctFmt) {
+        const cvs = document.getElementById(canvasId); if (!cvs) return;
+        const barColors = data.map(v => v != null && v < 0 ? '#ef444499' : color + 'CC');
+        qRoeCharts[canvasId] = new Chart(cvs, {
+          type: 'bar',
+          data: { labels: dates, datasets: [{ data, backgroundColor: barColors, borderColor: 'transparent', borderWidth: 0, borderRadius: 0 }] },
+          options: {
+            responsive: true, maintainAspectRatio: true,
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => pctFmt ? fmtNum(ctx.parsed.y, 2) + '%' : fmtNum(ctx.parsed.y, 3) + 'x' } } },
+            scales: {
+              x: { grid: { display: false }, ticks: { font: { size: 8 }, color: chartText, maxRotation: 45 } },
+              y: { grid: { color: chartGridY }, ticks: { font: { size: 8 }, color: chartText, callback: v => pctFmt ? v.toFixed(1) + '%' : v.toFixed(2) + 'x' } },
+            },
+          },
+        });
+      }
+
+      el.innerHTML = `
+        <div class="text-center mb-8">
+          <p class="v0-section-label mb-3">直近8四半期 ROE DuPont分解</p>
+          <div class="inline-block px-8 py-5 th-bg-2 border-2" style="border-color:var(--accent-v0);border-radius:0">
+            <p class="text-[10px] uppercase tracking-[0.2em] th-text-m mb-1" style="font-family:'IBM Plex Mono','Courier New',monospace">ROE</p>
+            <p class="text-4xl font-bold tabular-nums" style="color:var(--accent-v0);font-family:'IBM Plex Mono','Courier New',monospace">${latestROE != null ? fmtNum(latestROE,1)+'<span class="text-xl">%</span>' : '—'}</p>
+            <p class="text-[10px] th-text-m mt-1">四半期 (最新)</p>
+          </div>
+        </div>
+        <div class="flex flex-wrap justify-center gap-2 mb-8 text-[11px] th-text-m">
+          <span class="px-3 py-1 th-bg-2 border font-bold" style="border-color:var(--border-s);border-radius:0;font-family:'IBM Plex Mono',monospace">ROE ${latestROE != null ? fmtNum(latestROE,1)+'%' : '—'}</span>
+          <span>=</span>
+          <span class="px-3 py-1 th-bg-2 border font-bold" style="border-color:var(--border-s);border-radius:0;font-family:'IBM Plex Mono',monospace">純利益率 ${latestNPM != null ? fmtNum(latestNPM,1)+'%' : '—'}</span>
+          <span>×</span>
+          <span class="px-3 py-1 th-bg-2 border font-bold" style="border-color:var(--border-s);border-radius:0;font-family:'IBM Plex Mono',monospace">資産回転率 ${latestAT != null ? fmtNum(latestAT,3)+'x' : '—'}</span>
+          <span>×</span>
+          <span class="px-3 py-1 th-bg-2 border font-bold" style="border-color:var(--border-s);border-radius:0;font-family:'IBM Plex Mono',monospace">レバレッジ ${latestLev != null ? fmtNum(latestLev,2)+'x' : '—'}</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div class="p-5 th-bg-2 border" style="border-color:var(--border-s);border-radius:0">
+            <div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 bg-blue-500" style="border-radius:0"></div><span class="text-[10px] font-bold uppercase tracking-[0.18em] th-text-m" style="font-family:'IBM Plex Mono','Courier New',monospace">純利益率</span></div>
+            <p class="text-2xl font-bold tabular-nums mb-1" style="font-family:'IBM Plex Mono','Courier New',monospace">${latestNPM != null ? fmtNum(latestNPM,1) : '—'}<span class="text-sm th-text-m">%</span></p>
+            <p class="text-[10px] th-text-m mb-3">Net Income / Revenue</p>
+            <canvas id="qDupontNPMChart" style="max-height:120px"></canvas>
+          </div>
+          <div class="p-5 th-bg-2 border" style="border-color:var(--border-s);border-radius:0">
+            <div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 bg-brand" style="border-radius:0"></div><span class="text-[10px] font-bold uppercase tracking-[0.18em] th-text-m" style="font-family:'IBM Plex Mono','Courier New',monospace">資産回転率</span></div>
+            <p class="text-2xl font-bold tabular-nums mb-1" style="font-family:'IBM Plex Mono','Courier New',monospace">${latestAT != null ? fmtNum(latestAT,3) : '—'}<span class="text-sm th-text-m">x</span></p>
+            <p class="text-[10px] th-text-m mb-3">Revenue / Total Assets</p>
+            <canvas id="qDupontATChart" style="max-height:120px"></canvas>
+          </div>
+          <div class="p-5 th-bg-2 border" style="border-color:var(--border-s);border-radius:0">
+            <div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 bg-amber-500" style="border-radius:0"></div><span class="text-[10px] font-bold uppercase tracking-[0.18em] th-text-m" style="font-family:'IBM Plex Mono','Courier New',monospace">財務レバレッジ</span></div>
+            <p class="text-2xl font-bold tabular-nums mb-1" style="font-family:'IBM Plex Mono','Courier New',monospace">${latestLev != null ? fmtNum(latestLev,2) : '—'}<span class="text-sm th-text-m">x</span></p>
+            <p class="text-[10px] th-text-m mb-3">Total Assets / Equity</p>
+            <canvas id="qDupontLEVChart" style="max-height:120px"></canvas>
+          </div>
+        </div>
+      `;
+
+      requestAnimationFrame(() => {
+        qMiniChart('qDupontNPMChart', npm, '#3b82f6', true);
+        qMiniChart('qDupontATChart',  at,  '#D4852A', false);
+        qMiniChart('qDupontLEVChart', lev, '#f59e0b', false);
+      });
+    }
+
+    // ── Quarterly Financial Statements (BS / PL / CF) ──────────────────────────
+    function renderQuarterlyFinancialStatements(q) {
+      const rev = arr => Array.isArray(arr) ? arr.slice().reverse() : arr;
+      const dates = q.dates.slice().reverse().map(d => d.slice(0, 7));
+      const inc = q.income || {}, bal = q.balance || {}, cf = q.cashflow || {};
+      const sym = currentCurrencySymbol || '';
+
+      function buildTable(rows, dates) {
+        const ths = dates.map(d => `<th class="px-3 py-2 text-right text-[9px] font-bold tracking-wider whitespace-nowrap" style="font-family:'IBM Plex Mono',monospace">${d}</th>`).join('');
+        const trs = rows.map(r => {
+          if (r.header) return `<tr><td colspan="${dates.length + 1}" class="px-3 py-2 text-[9px] font-bold uppercase tracking-[0.2em]" style="color:var(--accent-v0);font-family:'IBM Plex Mono',monospace;border-top:1px solid var(--border-m)">${r.label}</td></tr>`;
+          const data = rev(r.data || []);
+          const tds = dates.map((_, i) => {
+            const v = data[i];
+            const fmt = v != null ? (r.pct ? fmtNum(v, 1) + '%' : (r.ratio ? fmtNum(v, 2) + 'x' : smartFormat(v))) : '—';
+            const color = v != null && v < 0 ? 'color:#f87171' : '';
+            return `<td class="px-3 py-2 text-right text-[10px] tabular-nums whitespace-nowrap" style="font-family:'IBM Plex Mono',monospace;${color}">${fmt}</td>`;
+          }).join('');
+          const indent = r.indent ? 'padding-left:1.5rem;' : '';
+          return `<tr class="border-t" style="border-color:var(--border)"><td class="px-3 py-2 text-[10px] th-text-s whitespace-nowrap" style="${indent}">${r.label}</td>${tds}</tr>`;
+        }).join('');
+        return `<table class="w-full text-left th-bg-1 border th-border" style="border-radius:0;min-width:500px">
+          <thead class="th-bg-2"><tr><th class="px-3 py-2 text-[9px] font-bold tracking-wider th-text-m w-40">指標</th>${ths}</tr></thead>
+          <tbody>${trs}</tbody></table>`;
+      }
+
+      // PL
+      const plRows = [
+        { label: 'Revenue',          data: inc['Total Revenue'] },
+        { label: 'Gross Profit',      data: inc['Gross Profit'] },
+        { label: 'Operating Income',  data: inc['Operating Income'] },
+        { label: 'EBITDA',            data: inc['EBITDA'] },
+        { label: 'Net Income',        data: inc['Net Income'] },
+        { label: 'EPS (Diluted)',     data: inc['Diluted EPS'], ratio: true },
+      ];
+      const bsRows = [
+        { label: 'Total Assets',       data: bal['Total Assets'] },
+        { label: 'Current Assets',     data: bal['Current Assets'] },
+        { label: 'Total Liabilities',  data: bal['Total Liabilities Net Minority Interest'] || bal['Total Debt'] },
+        { label: 'Total Debt',         data: bal['Total Debt'] },
+        { label: 'Equity',             data: bal['Stockholders Equity'] },
+      ];
+      const cfRows = [
+        { label: 'Operating CF',   data: cf['Operating Cash Flow'] },
+        { label: 'Investing CF',   data: cf['Investing Cash Flow'] || cf['Capital Expenditure'] },
+        { label: 'Financing CF',   data: cf['Financing Cash Flow'] },
+        { label: 'FCF',            data: cf['Free Cash Flow'] },
+        { label: 'CapEx',          data: cf['Capital Expenditure'] },
+      ];
+
+      const plEl = $('qFsPlTable'); if (plEl) plEl.innerHTML = buildTable(plRows, dates);
+      const bsEl = $('qFsBsTable'); if (bsEl) bsEl.innerHTML = buildTable(bsRows, dates);
+      const cfEl = $('qFsCfTable'); if (cfEl) cfEl.innerHTML = buildTable(cfRows, dates);
     }
 
     let currentChartType = 'bar';
@@ -3756,6 +4141,15 @@
     $('checklistClose').addEventListener('click', () => closeModal('checklistModal'));
     $('checklistModal').addEventListener('click', e => { if (e.target === $('checklistModal')) closeModal('checklistModal'); });
 
+    // Time Series tab — Select Metrics / Show All buttons
+    $('btnTsMetrics').addEventListener('click', openChecklist);
+    $('btnTsShowAll').addEventListener('click', () => {
+      selectedMetrics.clear();
+      $('tsDefaultCharts').classList.remove('hidden');
+      $('tsCustomCharts').classList.add('hidden');
+      $('btnTsShowAll').classList.add('hidden');
+    });
+
     $('checklistClear').addEventListener('click', () => {
       selectedMetrics.clear();
       $('checklistBody').querySelectorAll('.metric-cb').forEach(cb => cb.checked = false);
@@ -3767,8 +4161,9 @@
       closeModal('checklistModal');
 
       if (selectedMetrics.size === 0) {
-        $('customEmpty').classList.remove('hidden');
-        $('customContent').classList.add('hidden');
+        $('tsDefaultCharts').classList.remove('hidden');
+        $('tsCustomCharts').classList.add('hidden');
+        $('btnTsShowAll').classList.add('hidden');
         return;
       }
 
@@ -3796,13 +4191,16 @@
     });
 
     function renderCustomAnalysis() {
-      $('customEmpty').classList.add('hidden');
-      $('customContent').classList.remove('hidden');
+      // Show custom area in Time Series tab, hide default charts
+      $('tsDefaultCharts').classList.add('hidden');
+      $('tsCustomCharts').classList.remove('hidden');
+      $('btnTsShowAll').classList.remove('hidden');
 
       catOrder.forEach(cat => {
-        const el = $('customCat-' + cat);
+        const el = $('tsCat-' + cat);
+        if (!el) return;
         el.classList.add('hidden');
-        el.querySelector('.custom-cat-items').innerHTML = '';
+        el.querySelector('.ts-cat-items').innerHTML = '';
       });
 
       Object.values(customCharts).forEach(c => c.destroy());
@@ -3823,9 +4221,10 @@
       catOrder.forEach(cat => {
         const items = grouped[cat];
         if (!items.length) return;
-        const container = $('customCat-' + cat);
+        const container = $('tsCat-' + cat);
+        if (!container) return;
         container.classList.remove('hidden');
-        const itemsDiv = container.querySelector('.custom-cat-items');
+        const itemsDiv = container.querySelector('.ts-cat-items');
 
         items.forEach(({ key, meta }) => {
           // getChartData でスケール・方向補正済みデータを取得

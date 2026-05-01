@@ -634,16 +634,16 @@
 
       <!-- Tab 2: Financial Analysis -->
       <div id="maintab-financials" class="main-tab-content hidden">
-        <!-- Sub-tabs: [財務分析① 10年分析] [財務分析② 2年分析] -->
+        <!-- Sub-tabs: [財務分析② 2年分析] [財務分析① 10年分析] -->
         <div class="mb-6 tab-nav-wrap">
           <nav class="flex gap-0 border-b" id="subTabNav" style="border-color:var(--border-s)">
-            <button class="sub-tab-btn sub-tab-active px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] border-b-2 transition-all whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace;border-color:var(--accent-v0)" data-subtab="annual">財務分析① 10年分析</button>
-            <button class="sub-tab-btn px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] th-text-m border-b-2 border-transparent transition-all whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace" data-subtab="quarterly">財務分析② 2年分析</button>
+            <button class="sub-tab-btn sub-tab-active px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] border-b-2 transition-all whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace;border-color:var(--accent-v0)" data-subtab="quarterly" data-i18n="2-Year Analysis">2-Year Analysis</button>
+            <button class="sub-tab-btn px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] th-text-m border-b-2 border-transparent transition-all whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace" data-subtab="annual" data-i18n="10-Year Analysis">10-Year Analysis</button>
           </nav>
         </div>
 
         <!-- subtab-annual: Evaluation + 10-Year Analysis -->
-        <div id="subtab-annual" class="sub-tab-content">
+        <div id="subtab-annual" class="sub-tab-content hidden">
           <!-- Investment Verdict & Scores -->
           <div class="flex flex-col sm:flex-row gap-3 mb-6">
             <div id="verdictCard" class="text-center px-10 py-6 glow-accent w-full sm:w-auto" style="border-radius:0">
@@ -858,24 +858,24 @@
         </div><!-- /subtab-annual -->
 
         <!-- subtab-quarterly: 2年分析 -->
-        <div id="subtab-quarterly" class="sub-tab-content hidden">
+        <div id="subtab-quarterly" class="sub-tab-content">
           <div id="quarterlyNoData" class="hidden text-center py-16">
-            <p class="font-plex-mono text-[11px] th-text-m" data-i18n="quarterly-no-data">Quarterly data is only available for ticker-based analysis.</p>
+            <p class="font-plex-mono text-[11px] th-text-m" data-i18n="Q no data msg">Quarterly data is only available for ticker-based analysis.</p>
           </div>
           <div id="quarterlyChartContent" class="hidden">
             <!-- Q inner sub-tabs -->
             <div class="mb-6 tab-nav-wrap">
               <nav class="flex gap-0 border-b overflow-x-auto scrollbar-hide" id="qInnerTabNav" style="border-color:var(--border-s)">
-                <button class="q-inner-tab q-inner-active px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] border-b-2 transition-all whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace;border-color:var(--accent-v0)" data-qtab="ts">時系列分析</button>
-                <button class="q-inner-tab px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] th-text-m border-b-2 border-transparent transition-all whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace" data-qtab="roe">ROE分解（四半期）</button>
-                <button class="q-inner-tab px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] th-text-m border-b-2 border-transparent transition-all whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace" data-qtab="fs">財務諸表</button>
+                <button class="q-inner-tab q-inner-active px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] border-b-2 transition-all whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace;border-color:var(--accent-v0)" data-qtab="ts" data-i18n="Time Series Analysis">Time Series Analysis</button>
+                <button class="q-inner-tab px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] th-text-m border-b-2 border-transparent transition-all whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace" data-qtab="roe" data-i18n="PBR Analysis (Q)">PBR Analysis (Q)</button>
+                <button class="q-inner-tab px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] th-text-m border-b-2 border-transparent transition-all whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace" data-qtab="fs" data-i18n="Financial Statements">Financial Statements</button>
               </nav>
             </div>
 
             <!-- Q sub-tab: 時系列 -->
             <div id="qtab-ts" class="q-inner-content">
               <div class="flex items-center justify-between mb-6">
-                <h3 class="v0-section-label">時系列分析</h3>
+                <h3 class="v0-section-label" data-i18n="Time Series Analysis">Time Series Analysis</h3>
                 <div class="flex gap-2">
                   <button id="qChartTypeBarBtn" class="q-chart-type-btn px-4 py-2 text-[10px] font-bold border transition-all" style="border-color:var(--accent-v0);color:var(--accent-v0);border-radius:0;font-family:'IBM Plex Mono','Courier New',monospace" data-qtype="bar">Bar</button>
                   <button id="qChartTypeLineBtn" class="q-chart-type-btn px-4 py-2 text-[10px] font-bold border transition-all" style="border-color:var(--border-s);border-radius:0;font-family:'IBM Plex Mono','Courier New',monospace" data-qtype="line">Line</button>
@@ -902,17 +902,17 @@
             <div id="qtab-fs" class="q-inner-content hidden">
               <!-- PL sub-section -->
               <div class="mb-8">
-                <h3 class="v0-section-label mb-4">損益計算書 (PL)</h3>
+                <h3 class="v0-section-label mb-4" data-i18n="Income Statement">Income Statement (PL)</h3>
                 <div id="qFsPlTable" class="overflow-x-auto"></div>
               </div>
               <!-- BS sub-section -->
               <div class="mb-8">
-                <h3 class="v0-section-label mb-4">貸借対照表 (BS)</h3>
+                <h3 class="v0-section-label mb-4" data-i18n="Balance Sheet (BS)">Balance Sheet (BS)</h3>
                 <div id="qFsBsTable" class="overflow-x-auto"></div>
               </div>
               <!-- CF sub-section -->
               <div class="mb-8">
-                <h3 class="v0-section-label mb-4">キャッシュフロー計算書</h3>
+                <h3 class="v0-section-label mb-4" data-i18n="Cash Flow Statement">Cash Flow Statement</h3>
                 <div id="qFsCfTable" class="overflow-x-auto"></div>
               </div>
             </div>
@@ -1343,13 +1343,27 @@
       'beta-detail':          { ja: 'β>1: 市場より高ボラ / β<1: 低ボラ', en: 'β>1: High vol vs market / β<1: Low vol' },
       // Chart period range buttons
       'MAX':                  { ja: '全期間', en: 'MAX' },
+      // Sub-tab labels
+      '10-Year Analysis':     { ja: '10年財務分析', en: '10-Year Analysis' },
+      '2-Year Analysis':      { ja: '2年財務分析', en: '2-Year Analysis' },
       // Quarterly sub-tabs
       'Time Series Analysis': { ja: '時系列分析', en: 'Time Series Analysis' },
-      'ROE Decomposition Q':  { ja: 'ROE分解（四半期）', en: 'ROE Decomposition' },
+      'PBR Analysis (Q)':     { ja: 'PBR分析（四半期）', en: 'PBR Analysis (Q)' },
       'Financial Statements': { ja: '財務諸表', en: 'Financial Statements' },
       'Income Statement':     { ja: '損益計算書 (PL)', en: 'Income Statement (PL)' },
+      'Balance Sheet (BS)':   { ja: '貸借対照表 (BS)', en: 'Balance Sheet (BS)' },
       'Cash Flow Statement':  { ja: 'キャッシュフロー計算書', en: 'Cash Flow Statement' },
-      'Quarterly ROE':        { ja: '四半期ROE', en: 'Quarterly ROE' },
+      '8Q PBR Analysis':      { ja: '直近8四半期 PBR分析', en: '8-Quarter PBR Analysis' },
+      'PBR Contribution':     { ja: 'PBR貢献度分析 (1年変化)', en: 'PBR Contribution Analysis (1Y Change)' },
+      'PER Contribution':     { ja: 'PER貢献', en: 'PER Contribution' },
+      'ROE Contribution':     { ja: 'ROE貢献', en: 'ROE Contribution' },
+      'Interaction Term':     { ja: '交差項', en: 'Interaction Term' },
+      '1Y ago':               { ja: '1年前', en: '1Y ago' },
+      'Latest (Q)':           { ja: '四半期 (最新)', en: 'Latest (Q)' },
+      'Operating CF':         { ja: '営業CF', en: 'Operating CF' },
+      'Investing CF':         { ja: '投資CF', en: 'Investing CF' },
+      'Financing CF':         { ja: '財務CF', en: 'Financing CF' },
+      'Q no data msg':        { ja: '四半期データはティッカー取得時のみ利用可能です。', en: 'Quarterly data is only available for ticker-based analysis.' },
       // Select Metrics in Time Series
       'Select Metrics (TS)':  { ja: '指標を選択', en: 'Select Metrics' },
       'Show All':             { ja: '全指標を表示', en: 'Show All' },
@@ -2032,6 +2046,8 @@
       if (tsDefault) tsDefault.classList.remove('hidden');
       if (tsCustom) tsCustom.classList.add('hidden');
       if (tsShowAll) tsShowAll.classList.add('hidden');
+      // Reset sub-tab to quarterly (2-year analysis) by default
+      activateSubTab('quarterly');
       window.scrollTo(0, 0);
 
       // Set data scaling flags from timeseries metadata
@@ -2900,8 +2916,8 @@
       if (stockPriceChart) { stockPriceChart.destroy(); stockPriceChart = null; }
       const canvas = $('chartStockPrice');
       if (!canvas) return;
-      const allDates = ts.price_monthly_dates || [];
-      const allPrices = ts.price_monthly || [];
+      const allDates = ts.price_daily_dates && ts.price_daily_dates.length ? ts.price_daily_dates : (ts.price_monthly_dates || []);
+      const allPrices = ts.price_daily_dates && ts.price_daily_dates.length ? (ts.price_daily || []) : (ts.price_monthly || []);
       stockPriceAllDates = allDates;
       stockPriceAllPrices = allPrices;
       if (!allDates.length || !allPrices.length) { canvas.closest('.lg\\:col-span-2').style.display = 'none'; return; }
@@ -2991,7 +3007,7 @@
         btn.classList.add('price-range-active');
         btn.style.borderColor = 'var(--accent-v0)';
         btn.style.color = 'var(--accent-v0)';
-        if (stockPriceAllDates.length) renderStockPriceChart({ price_monthly_dates: stockPriceAllDates, price_monthly: stockPriceAllPrices }, stockPriceRange);
+        if (stockPriceAllDates.length) renderStockPriceChart({ price_daily_dates: stockPriceAllDates, price_daily: stockPriceAllPrices }, stockPriceRange);
       });
     });
 
@@ -3094,8 +3110,8 @@
       if (noDataEl) noDataEl.classList.add('hidden');
       if (contentEl) contentEl.classList.remove('hidden');
 
-      const dates = q.dates.slice().reverse().map(d => d.slice(0, 7));
-      const rev = arr => Array.isArray(arr) ? arr.slice().reverse() : arr;
+      const dates = q.dates.slice(0, 8).reverse().map(d => d.slice(0, 7));
+      const rev = arr => Array.isArray(arr) ? arr.slice(0, 8).reverse() : [];
       const cs = getComputedStyle(document.documentElement);
       const chartText = cs.getPropertyValue('--chart-text').trim();
       const chartGridY = cs.getPropertyValue('--chart-grid-y').trim();
@@ -3118,8 +3134,20 @@
       function qBarColors(data, posColor) {
         return (data || []).map(v => (v != null && v < 0) ? '#ef444499' : posColor + 'CC');
       }
+      function qShowNoData(el) {
+        el.style.display = 'none';
+        const wrap = el.parentElement;
+        if (wrap && !wrap.querySelector('.q-nodata')) {
+          const p = document.createElement('p');
+          p.className = 'q-nodata text-sm th-text-m text-center py-6 tabular-nums';
+          p.textContent = '—';
+          wrap.appendChild(p);
+        }
+      }
       function qCreateChart(id, label, data, color) {
         const el = $(id); if (!el) return;
+        const hasData = Array.isArray(data) && data.some(v => v != null && v !== 0);
+        if (!hasData) { qShowNoData(el); return; }
         const dataset = isLine
           ? { label, data, borderColor: color, backgroundColor: color + '18', fill: true, borderWidth: 2, pointRadius: 3, tension: 0 }
           : { label, data, backgroundColor: qBarColors(data, color), borderColor: 'transparent', borderWidth: 0, borderRadius: 0 };
@@ -3127,6 +3155,8 @@
       }
       function qMultiChart(id, datasets) {
         const el = $(id); if (!el) return;
+        const hasData = datasets.some(d => Array.isArray(d.data) && d.data.some(v => v != null && v !== 0));
+        if (!hasData) { qShowNoData(el); return; }
         const ds = datasets.map(d => isLine
           ? { ...d, backgroundColor: d.borderColor + '18', fill: false, borderWidth: 2, pointRadius: 3, tension: 0 }
           : { ...d, backgroundColor: qBarColors(d.data, d.borderColor.slice(0,7)), borderColor: 'transparent', fill: false, borderWidth: 0, pointRadius: 0 });
@@ -3134,6 +3164,7 @@
       }
 
       const inc = q.income || {}, bal = q.balance || {}, cf = q.cashflow || {};
+      const nullify = arr => (arr || []).map(v => (v == null || (v === 0 && arr.every(x => x == null || x === 0))) ? null : v);
       qCreateChart('chartQRevenue',     t('Revenue'),          rev(inc['Total Revenue']),      '#D4852A');
       qCreateChart('chartQNetIncome',   t('Net Income'),       rev(inc['Net Income']),         '#D4852A');
       qCreateChart('chartQOpIncome',    t('Operating Income'), rev(inc['Operating Income']),   '#D4852A');
@@ -3146,49 +3177,84 @@
         { label: t('Debt'),         data: rev(bal['Total Debt']),          borderColor: '#ef4444' },
       ]);
       qMultiChart('chartQCF', [
-        { label: t('営業CF'), data: rev(cf['Operating Cash Flow']), borderColor: '#D4852A' },
-        { label: 'FCF',       data: rev(cf['Free Cash Flow']),      borderColor: '#22c55e' },
-        { label: 'CapEx',     data: rev(cf['Capital Expenditure']), borderColor: '#ef4444' },
+        { label: t('Operating CF'), data: rev(cf['Operating Cash Flow']), borderColor: '#D4852A' },
+        { label: 'FCF',             data: rev(cf['Free Cash Flow']),      borderColor: '#22c55e' },
+        { label: 'CapEx',           data: rev(cf['Capital Expenditure']), borderColor: '#ef4444' },
       ]);
 
-      renderQuarterlyROETree(q);
+      renderQPBRAnalysis(q);
       renderQuarterlyFinancialStatements(q);
     }
 
-    // ── Quarterly ROE Decomposition (DuPont) ─────────────────────────────────
+    // ── Quarterly PBR Analysis (mirrors annual PBR tab) ─────────────────────
     let qRoeCharts = {};
-    function renderQuarterlyROETree(q) {
+    function renderQPBRAnalysis(q) {
       const el = $('qRoeTree');
       if (!el) return;
       Object.values(qRoeCharts).forEach(c => c.destroy()); qRoeCharts = {};
 
-      const rev = arr => Array.isArray(arr) ? arr.slice().reverse() : arr;
+      const revQ = arr => Array.isArray(arr) ? arr.slice(0, 8).reverse() : [];
       const inc = q.income || {}, bal = q.balance || {};
-      const dates = q.dates.slice().reverse().map(d => d.slice(0, 7));
+      const dates = q.dates.slice(0, 8).reverse().map(d => d.slice(0, 7));
 
-      const ni   = rev(inc['Net Income'])           || [];
-      const rev_ = rev(inc['Total Revenue'])        || [];
-      const ta   = rev(bal['Total Assets'])         || [];
-      const eq   = rev(bal['Stockholders Equity'])  || [];
+      const ni   = revQ(inc['Net Income']);
+      const rev_ = revQ(inc['Total Revenue']);
+      const ta   = revQ(bal['Total Assets']);
+      const eq   = revQ(bal['Stockholders Equity']);
+      const eps  = revQ(inc['Diluted EPS']);
+      const shares = revQ(bal['Ordinary Shares Number'] || bal['Share Issued']);
 
-      const safe = (a, b) => (a != null && b != null && b !== 0) ? a / b : null;
-      const pct  = arr => arr.map(v => v != null ? v * 100 : null);
+      const safeDiv = (a, b) => (a != null && b != null && b !== 0) ? a / b : null;
 
-      const roe    = ni.map((v, i) => safe(v, eq[i]) != null ? safe(v, eq[i]) * 100 : null);
-      const npm    = ni.map((v, i) => rev_[i] ? (v / rev_[i]) * 100 : null);
-      const at     = rev_.map((v, i) => ta[i] ? v / ta[i] : null);
-      const lev    = ta.map((v, i) => eq[i] ? v / eq[i] : null);
+      // Quarterly DuPont components
+      const qROE = ni.map((v, i) => v != null && eq[i] != null && eq[i] !== 0 ? v / eq[i] * 100 : null);
+      const qNPM = ni.map((v, i) => v != null && rev_[i] ? v / rev_[i] * 100 : null);
+      const qAT  = rev_.map((v, i) => v != null && ta[i] ? v / ta[i] : null);
+      const qLev = ta.map((v, i) => v != null && eq[i] && eq[i] !== 0 ? v / eq[i] : null);
+
+      // BPS = Equity / Shares (for quarterly PBR trend)
+      const qBPS = eq.map((v, i) => shares[i] && shares[i] > 0 ? v / shares[i] : null);
+
+      // Find price closest to each quarter-end date using daily price data
+      const dailyDates  = lastData && lastData.timeseries ? (lastData.timeseries.price_daily_dates  || []) : [];
+      const dailyPrices = lastData && lastData.timeseries ? (lastData.timeseries.price_daily || []) : [];
+      function priceAtDate(dateStr) {
+        if (!dailyDates.length) return null;
+        let best = -1, bestMs = Infinity;
+        const target = new Date(dateStr).getTime();
+        for (let i = 0; i < dailyDates.length; i++) {
+          const d = Math.abs(new Date(dailyDates[i]).getTime() - target);
+          if (d < bestMs) { bestMs = d; best = i; }
+        }
+        return bestMs < 864e5 * 14 ? dailyPrices[best] : null; // within 14 days
+      }
+      const qDates_orig = q.dates.slice(0, 8).reverse();
+      const qPrice = qDates_orig.map(d => priceAtDate(d));
+      const qPBR   = qPrice.map((p, i) => p != null && qBPS[i] && qBPS[i] !== 0 ? p / qBPS[i] : null);
+      const qPER   = qPrice.map((p, i) => p != null && eps[i] && eps[i] > 0 ? p / (eps[i] * 4) : null);
+
+      // Current values from main analysis
+      const sc = lastData ? (lastData.screening || {}) : {};
+      const pbrData = sc['C-2_PBR'] || {};
+      const perData = sc['C-1_PER'] || {};
+      const pbrVal  = pbrData['実績値'];
+      const perVal  = perData['実績値'];
+      const pbrC    = lastData ? (lastData.pbr_contribution || {}) : {};
+      const perChg  = pbrC.per_change;
+      const pbrChg  = pbrC.pbr_change;
+
+      const latestROE = qROE.filter(v => v != null).slice(-1)[0];
+      const latestNPM = qNPM.filter(v => v != null).slice(-1)[0];
+      const latestAT  = qAT.filter(v => v != null).slice(-1)[0];
+      const latestLev = qLev.filter(v => v != null).slice(-1)[0];
+      const latestPBR = qPBR.filter(v => v != null).slice(-1)[0] ?? pbrVal;
+      const latestPER = qPER.filter(v => v != null).slice(-1)[0] ?? perVal;
 
       const cs = getComputedStyle(document.documentElement);
       const chartText = cs.getPropertyValue('--chart-text').trim();
       const chartGridY = cs.getPropertyValue('--chart-grid-y').trim();
 
-      const latestROE = roe.filter(v => v != null).slice(-1)[0];
-      const latestNPM = npm.filter(v => v != null).slice(-1)[0];
-      const latestAT  = at.filter(v => v != null).slice(-1)[0];
-      const latestLev = lev.filter(v => v != null).slice(-1)[0];
-
-      function qMiniChart(canvasId, data, color, pctFmt) {
+      function qMiniChart(canvasId, data, color, fmtCb) {
         const cvs = document.getElementById(canvasId); if (!cvs) return;
         const barColors = data.map(v => v != null && v < 0 ? '#ef444499' : color + 'CC');
         qRoeCharts[canvasId] = new Chart(cvs, {
@@ -3196,59 +3262,177 @@
           data: { labels: dates, datasets: [{ data, backgroundColor: barColors, borderColor: 'transparent', borderWidth: 0, borderRadius: 0 }] },
           options: {
             responsive: true, maintainAspectRatio: true,
-            plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => pctFmt ? fmtNum(ctx.parsed.y, 2) + '%' : fmtNum(ctx.parsed.y, 3) + 'x' } } },
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => fmtCb(ctx.parsed.y) } } },
             scales: {
               x: { grid: { display: false }, ticks: { font: { size: 8 }, color: chartText, maxRotation: 45 } },
-              y: { grid: { color: chartGridY }, ticks: { font: { size: 8 }, color: chartText, callback: v => pctFmt ? v.toFixed(1) + '%' : v.toFixed(2) + 'x' } },
+              y: { grid: { color: chartGridY }, ticks: { font: { size: 8 }, color: chartText, callback: v => fmtCb(v) } },
             },
           },
         });
       }
 
+      const isROENeg = latestROE != null && latestROE < 0;
+
       el.innerHTML = `
-        <div class="text-center mb-8">
-          <p class="v0-section-label mb-3">直近8四半期 ROE DuPont分解</p>
-          <div class="inline-block px-8 py-5 th-bg-2 border-2" style="border-color:var(--accent-v0);border-radius:0">
-            <p class="text-[10px] uppercase tracking-[0.2em] th-text-m mb-1" style="font-family:'IBM Plex Mono','Courier New',monospace">ROE</p>
-            <p class="text-4xl font-bold tabular-nums" style="color:var(--accent-v0);font-family:'IBM Plex Mono','Courier New',monospace">${latestROE != null ? fmtNum(latestROE,1)+'<span class="text-xl">%</span>' : '—'}</p>
-            <p class="text-[10px] th-text-m mt-1">四半期 (最新)</p>
+        <!-- PBR badge (top) -->
+        <div class="text-center mb-6">
+          <p class="v0-section-label mb-2">${t('8Q PBR Analysis')}</p>
+          ${isROENeg ? `
+          <div class="inline-block px-6 sm:px-14 py-6 th-bg-2 border-2" style="border-color:#4b5563;border-radius:0">
+            <p class="text-[10px] uppercase tracking-[0.2em] th-text-m mb-1" style="font-family:'IBM Plex Mono','Courier New',monospace">PBR</p>
+            <p class="text-4xl font-bold tabular-nums" style="color:#4b5563;font-family:'IBM Plex Mono','Courier New',monospace">N/A</p>
+            <p class="text-xs mt-2 th-text-m">${currentLang==='ja'?'分解不成立（ROE < 0）':'Decomposition N/A (ROE < 0)'}</p>
+          </div>` : `
+          <div class="inline-block px-6 sm:px-14 py-6 th-bg-2 border-2" style="border-color:var(--brand);border-radius:0">
+            <p class="text-[10px] uppercase tracking-[0.2em] th-text-m mb-1" style="font-family:'IBM Plex Mono','Courier New',monospace">PBR</p>
+            <p class="text-5xl font-bold tabular-nums" style="color:var(--brand);font-family:'IBM Plex Mono','Courier New',monospace">${latestPBR != null ? fmtNum(latestPBR,2) : (pbrVal != null ? fmtNum(pbrVal,2) : '—')}<span class="text-2xl th-text-m">x</span></p>
+            <p class="text-[11px] th-text-m mt-1">${t('Latest (Q)')}</p>
+            <p class="text-[11px] th-text-m mt-1">${t('5Y Change:')} <span class="${pbrChg>0?'text-green-400':pbrChg<0?'text-red-400':'th-text-m'}">${pbrChg!=null?((pbrChg>0?'+':'')+fmtNum(pbrChg,2)+'x'):'—'}</span></p>
+          </div>`}
+        </div>
+
+        <!-- PBR = ROE × PER formula -->
+        <div class="flex flex-wrap justify-center items-center gap-2 sm:gap-3 mb-3 text-sm th-text-m">
+          <span class="px-4 py-2 th-bg-2 border font-bold text-xs tracking-wider" style="border-color:var(--border);border-radius:0;font-family:'IBM Plex Mono','Courier New',monospace">PBR <strong class="${isROENeg?'text-gray-500':'th-text'}">${isROENeg?'N/A':(latestPBR!=null?fmtNum(latestPBR,2,'x'):(pbrVal!=null?fmtNum(pbrVal,2,'x'):'—'))}</strong></span>
+          <span class="text-lg">=</span>
+          <span class="px-4 py-2 th-bg-2 border font-bold text-xs tracking-wider" style="border-color:var(--border);border-radius:0;font-family:'IBM Plex Mono','Courier New',monospace">ROE <strong class="th-text">${latestROE!=null?fmtNum(latestROE,1,'%'):'—'}</strong></span>
+          <span class="text-lg">&times;</span>
+          <span class="px-4 py-2 th-bg-2 border font-bold text-xs tracking-wider" style="border-color:var(--border);border-radius:0;font-family:'IBM Plex Mono','Courier New',monospace">PER <strong class="${latestPER==null?'th-text-m':'th-text'}">${latestPER!=null?fmtNum(latestPER,1,'x'):(perVal!=null?fmtNum(perVal,1,'x'):'—')}</strong></span>
+        </div>
+
+        ${isROENeg ? `
+        <div class="flex items-center justify-center gap-2 mb-8 px-4 py-3 border border-yellow-500/30 max-w-xl mx-auto" style="background:rgba(234,179,8,0.07);border-radius:0">
+          <span class="text-yellow-400">⚠</span>
+          <p class="text-[11px] text-yellow-300">${t('ROE-negative-warning')}</p>
+        </div>` : '<div class="mb-4"></div>'}
+
+        <!-- PBR Contribution Analysis (1Y waterfall) -->
+        ${(()=>{
+          const valid = qPBR.filter(v => v != null);
+          if (valid.length < 2) return '';
+          const pbr0 = valid[0];       // oldest in range
+          const pbrN = valid[valid.length - 1]; // newest
+          const roe0 = qROE[0] != null ? qROE[0] / 100 : null;
+          const roeN = qROE[qROE.length - 1] != null ? qROE[qROE.length - 1] / 100 : null;
+          const per0 = qPER[0];
+          const perN = qPER[qPER.length - 1];
+          if (pbr0 == null || pbrN == null) return '';
+          const dPBR = pbrN - pbr0;
+          const dPER = (perN != null && per0 != null) ? perN - per0 : null;
+          const dROE = (roeN != null && roe0 != null) ? (roeN - roe0) * 100 : null;
+          // Contribution: ΔPBR = ROE_avg × ΔPER + PER_avg × ΔROE_dec + interaction
+          const roeAvg = (roe0 != null && roeN != null) ? (roe0 + roeN) / 2 : null;
+          const perAvg = (per0 != null && perN != null) ? (per0 + perN) / 2 : null;
+          const perContrib = (roeAvg != null && dPER != null) ? roeAvg * dPER : null;
+          const roeContrib = (perAvg != null && dROE != null) ? perAvg * (dROE / 100) : null;
+          const interaction = (perContrib != null && roeContrib != null) ? dPBR - perContrib - roeContrib : null;
+          const sign = v => v > 0 ? '+' : '';
+          const bar = (v, total) => {
+            if (v == null || total === 0) return '';
+            const pct = Math.min(Math.abs(v / total) * 100, 100).toFixed(1);
+            const clr = v > 0 ? '#22c55e' : '#ef4444';
+            return \`<div style="width:\${pct}%;height:6px;background:\${clr};border-radius:0;display:inline-block"></div>\`;
+          };
+          const totalAbs = Math.abs(dPBR) || 1;
+          return \`
+          <div class="mb-8 p-5 th-bg-2 border" style="border-color:var(--border-s);border-radius:0">
+            <p class="v0-section-label mb-4">\${t('PBR Contribution')}</p>
+            <div class="space-y-3 text-[11px]">
+              <div class="flex items-center justify-between">
+                <span class="th-text-m w-32">\${t('1Y ago')} PBR</span>
+                <span class="font-bold tabular-nums" style="font-family:'IBM Plex Mono',monospace">\${fmtNum(pbr0,2)}x</span>
+              </div>
+              \${perContrib != null ? \`<div class="flex items-center gap-3">
+                <span class="th-text-m w-32">\${t('PER Contribution')}</span>
+                <div class="flex-1">\${bar(perContrib, totalAbs)}</div>
+                <span class="font-bold tabular-nums w-16 text-right" style="font-family:'IBM Plex Mono',monospace;color:\${perContrib>=0?'#22c55e':'#ef4444'}">\${sign(perContrib)}\${fmtNum(perContrib,3)}x</span>
+              </div>\` : ''}
+              \${roeContrib != null ? \`<div class="flex items-center gap-3">
+                <span class="th-text-m w-32">\${t('ROE Contribution')}</span>
+                <div class="flex-1">\${bar(roeContrib, totalAbs)}</div>
+                <span class="font-bold tabular-nums w-16 text-right" style="font-family:'IBM Plex Mono',monospace;color:\${roeContrib>=0?'#22c55e':'#ef4444'}">\${sign(roeContrib)}\${fmtNum(roeContrib,3)}x</span>
+              </div>\` : ''}
+              \${interaction != null && Math.abs(interaction) > 0.001 ? \`<div class="flex items-center gap-3">
+                <span class="th-text-m w-32">\${t('Interaction Term')}</span>
+                <div class="flex-1">\${bar(interaction, totalAbs)}</div>
+                <span class="font-bold tabular-nums w-16 text-right" style="font-family:'IBM Plex Mono',monospace;color:\${interaction>=0?'#22c55e':'#ef4444'}">\${sign(interaction)}\${fmtNum(interaction,3)}x</span>
+              </div>\` : ''}
+              <div class="flex items-center justify-between border-t pt-3" style="border-color:var(--border-m)">
+                <span class="font-bold th-text-s w-32">Current PBR</span>
+                <span class="font-bold tabular-nums" style="font-family:'IBM Plex Mono',monospace;color:var(--accent-v0)">\${fmtNum(pbrN,2)}x (<span style="color:\${dPBR>=0?'#22c55e':'#ef4444'}">\${sign(dPBR)}\${fmtNum(dPBR,3)}x</span>)</span>
+              </div>
+            </div>
+          </div>\`;
+        })()}
+
+        <!-- PER + ROE side-by-side (mirrors annual) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+          <div class="p-6 th-bg-2 border" style="border-color:var(--border-s);border-radius:0">
+            <div class="flex items-center gap-2 mb-2">
+              <div class="w-3 h-3 bg-brand" style="border-radius:0"></div>
+              <span class="text-[10px] font-bold uppercase tracking-[0.18em] th-text-m" style="font-family:'IBM Plex Mono','Courier New',monospace">${t('Market Expectation')}</span>
+            </div>
+            <div class="flex items-baseline gap-2 mb-1">
+              <p class="text-3xl font-bold tabular-nums" style="font-family:'IBM Plex Mono','Courier New',monospace">${latestPER!=null?fmtNum(latestPER,1):(perVal!=null?fmtNum(perVal,1):'—')}<span class="text-lg th-text-m">x</span></p>
+            </div>
+            <p class="text-[10px] th-text-m mb-1">${t('per-desc')}</p>
+            <p class="text-[11px] th-text-m mb-3">${t('5Y Change:')} <span class="${perChg>0?'text-green-400':perChg<0?'text-red-400':'th-text-m'}">${perChg!=null?((perChg>0?'+':'')+fmtNum(perChg,1)+'x'):'—'}</span></p>
+            <canvas id="qPBRPERChart" style="max-height:140px"></canvas>
+          </div>
+          <div class="p-6 th-bg-2 border" style="border-color:var(--border-s);border-radius:0">
+            <div class="flex items-center gap-2 mb-2">
+              <div class="w-3 h-3 bg-green-500" style="border-radius:0"></div>
+              <span class="text-[10px] font-bold uppercase tracking-[0.18em] th-text-m" style="font-family:'IBM Plex Mono','Courier New',monospace">${t('Profitability (ROE)')}</span>
+            </div>
+            <div class="flex items-baseline gap-2 mb-1">
+              <p class="text-3xl font-bold tabular-nums" style="font-family:'IBM Plex Mono','Courier New',monospace">${latestROE!=null?fmtNum(latestROE,1):'—'}<span class="text-lg th-text-m">%</span></p>
+            </div>
+            <p class="text-[10px] th-text-m mb-1">${t('roe-desc')}</p>
+            <canvas id="qPBRROEChart" style="max-height:140px"></canvas>
           </div>
         </div>
-        <div class="flex flex-wrap justify-center gap-2 mb-8 text-[11px] th-text-m">
-          <span class="px-3 py-1 th-bg-2 border font-bold" style="border-color:var(--border-s);border-radius:0;font-family:'IBM Plex Mono',monospace">ROE ${latestROE != null ? fmtNum(latestROE,1)+'%' : '—'}</span>
-          <span>=</span>
-          <span class="px-3 py-1 th-bg-2 border font-bold" style="border-color:var(--border-s);border-radius:0;font-family:'IBM Plex Mono',monospace">純利益率 ${latestNPM != null ? fmtNum(latestNPM,1)+'%' : '—'}</span>
-          <span>×</span>
-          <span class="px-3 py-1 th-bg-2 border font-bold" style="border-color:var(--border-s);border-radius:0;font-family:'IBM Plex Mono',monospace">資産回転率 ${latestAT != null ? fmtNum(latestAT,3)+'x' : '—'}</span>
-          <span>×</span>
-          <span class="px-3 py-1 th-bg-2 border font-bold" style="border-color:var(--border-s);border-radius:0;font-family:'IBM Plex Mono',monospace">レバレッジ ${latestLev != null ? fmtNum(latestLev,2)+'x' : '—'}</span>
+
+        <!-- DuPont decomposition (mirrors annual) -->
+        <div class="mb-6">
+          <p class="v0-section-label mb-2 text-center">${t('ROE DuPont Decomposition')}</p>
+          <div class="flex flex-wrap justify-center gap-x-4 gap-y-1 text-[11px] th-text-m mb-6">
+            <span>ROE <strong class="th-text">${latestROE!=null?fmtNum(latestROE,1,'%'):'—'}</strong></span>
+            <span>=</span>
+            <span>${t('Net Margin')} <strong class="th-text">${latestNPM!=null?fmtNum(latestNPM,1,'%'):'—'}</strong></span>
+            <span>&times;</span>
+            <span>${t('Asset Turnover')} <strong class="th-text">${latestAT!=null?fmtNum(latestAT,2,'x'):'—'}</strong></span>
+            <span>&times;</span>
+            <span>${t('Leverage')} <strong class="th-text">${latestLev!=null?fmtNum(latestLev,2,'x'):'—'}</strong></span>
+          </div>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           <div class="p-5 th-bg-2 border" style="border-color:var(--border-s);border-radius:0">
-            <div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 bg-blue-500" style="border-radius:0"></div><span class="text-[10px] font-bold uppercase tracking-[0.18em] th-text-m" style="font-family:'IBM Plex Mono','Courier New',monospace">純利益率</span></div>
-            <p class="text-2xl font-bold tabular-nums mb-1" style="font-family:'IBM Plex Mono','Courier New',monospace">${latestNPM != null ? fmtNum(latestNPM,1) : '—'}<span class="text-sm th-text-m">%</span></p>
-            <p class="text-[10px] th-text-m mb-3">Net Income / Revenue</p>
+            <div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 bg-blue-500" style="border-radius:0"></div><span class="text-[10px] font-bold uppercase tracking-[0.18em] th-text-m" style="font-family:'IBM Plex Mono','Courier New',monospace">${t('Net Profit Margin')}</span></div>
+            <p class="text-2xl font-bold tabular-nums mb-1" style="font-family:'IBM Plex Mono','Courier New',monospace">${latestNPM!=null?fmtNum(latestNPM,1):'—'}<span class="text-sm th-text-m">%</span></p>
+            <p class="text-[10px] th-text-m mb-3">${t('Net Margin')} = ${t('Net Income')} / ${t('Revenue')}</p>
             <canvas id="qDupontNPMChart" style="max-height:120px"></canvas>
           </div>
           <div class="p-5 th-bg-2 border" style="border-color:var(--border-s);border-radius:0">
-            <div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 bg-brand" style="border-radius:0"></div><span class="text-[10px] font-bold uppercase tracking-[0.18em] th-text-m" style="font-family:'IBM Plex Mono','Courier New',monospace">資産回転率</span></div>
-            <p class="text-2xl font-bold tabular-nums mb-1" style="font-family:'IBM Plex Mono','Courier New',monospace">${latestAT != null ? fmtNum(latestAT,3) : '—'}<span class="text-sm th-text-m">x</span></p>
-            <p class="text-[10px] th-text-m mb-3">Revenue / Total Assets</p>
+            <div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 bg-brand" style="border-radius:0"></div><span class="text-[10px] font-bold uppercase tracking-[0.18em] th-text-m" style="font-family:'IBM Plex Mono','Courier New',monospace">${t('Asset Turnover')}</span></div>
+            <p class="text-2xl font-bold tabular-nums mb-1" style="font-family:'IBM Plex Mono','Courier New',monospace">${latestAT!=null?fmtNum(latestAT,3):'—'}<span class="text-sm th-text-m">x</span></p>
+            <p class="text-[10px] th-text-m mb-3">${t('Asset Turnover')} = ${t('Revenue')} / ${t('Total Assets')}</p>
             <canvas id="qDupontATChart" style="max-height:120px"></canvas>
           </div>
           <div class="p-5 th-bg-2 border" style="border-color:var(--border-s);border-radius:0">
-            <div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 bg-amber-500" style="border-radius:0"></div><span class="text-[10px] font-bold uppercase tracking-[0.18em] th-text-m" style="font-family:'IBM Plex Mono','Courier New',monospace">財務レバレッジ</span></div>
-            <p class="text-2xl font-bold tabular-nums mb-1" style="font-family:'IBM Plex Mono','Courier New',monospace">${latestLev != null ? fmtNum(latestLev,2) : '—'}<span class="text-sm th-text-m">x</span></p>
-            <p class="text-[10px] th-text-m mb-3">Total Assets / Equity</p>
+            <div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 bg-amber-500" style="border-radius:0"></div><span class="text-[10px] font-bold uppercase tracking-[0.18em] th-text-m" style="font-family:'IBM Plex Mono','Courier New',monospace">${t('Financial Leverage')}</span></div>
+            <p class="text-2xl font-bold tabular-nums mb-1" style="font-family:'IBM Plex Mono','Courier New',monospace">${latestLev!=null?fmtNum(latestLev,2):'—'}<span class="text-sm th-text-m">x</span></p>
+            <p class="text-[10px] th-text-m mb-3">${t('Leverage')} = ${t('Total Assets')} / ${t('Equity')}</p>
             <canvas id="qDupontLEVChart" style="max-height:120px"></canvas>
           </div>
         </div>
       `;
 
       requestAnimationFrame(() => {
-        qMiniChart('qDupontNPMChart', npm, '#3b82f6', true);
-        qMiniChart('qDupontATChart',  at,  '#D4852A', false);
-        qMiniChart('qDupontLEVChart', lev, '#f59e0b', false);
+        qMiniChart('qPBRPERChart',   qPER.length ? qPER : (perVal ? [perVal] : []), '#D4852A', v => fmtNum(v,1)+'x');
+        qMiniChart('qPBRROEChart',   qROE,  '#22c55e', v => fmtNum(v,1)+'%');
+        qMiniChart('qDupontNPMChart', qNPM, '#3b82f6', v => fmtNum(v,2)+'%');
+        qMiniChart('qDupontATChart',  qAT,  '#D4852A', v => fmtNum(v,3)+'x');
+        qMiniChart('qDupontLEVChart', qLev, '#f59e0b', v => fmtNum(v,2)+'x');
       });
     }
 
@@ -3274,7 +3458,7 @@
           return `<tr class="border-t" style="border-color:var(--border)"><td class="px-3 py-2 text-[10px] th-text-s whitespace-nowrap" style="${indent}">${r.label}</td>${tds}</tr>`;
         }).join('');
         return `<table class="w-full text-left th-bg-1 border th-border" style="border-radius:0;min-width:500px">
-          <thead class="th-bg-2"><tr><th class="px-3 py-2 text-[9px] font-bold tracking-wider th-text-m w-40">指標</th>${ths}</tr></thead>
+          <thead class="th-bg-2"><tr><th class="px-3 py-2 text-[9px] font-bold tracking-wider th-text-m w-40">Metric</th>${ths}</tr></thead>
           <tbody>${trs}</tbody></table>`;
       }
 
@@ -3295,11 +3479,11 @@
         { label: 'Equity',             data: bal['Stockholders Equity'] },
       ];
       const cfRows = [
-        { label: 'Operating CF',   data: cf['Operating Cash Flow'] },
-        { label: 'Investing CF',   data: cf['Investing Cash Flow'] || cf['Capital Expenditure'] },
-        { label: 'Financing CF',   data: cf['Financing Cash Flow'] },
-        { label: 'FCF',            data: cf['Free Cash Flow'] },
-        { label: 'CapEx',          data: cf['Capital Expenditure'] },
+        { label: t('Operating CF'),  data: cf['Operating Cash Flow'] },
+        { label: t('Investing CF'),  data: cf['Investing Cash Flow'] || cf['Capital Expenditure'] },
+        { label: t('Financing CF'),  data: cf['Financing Cash Flow'] },
+        { label: 'FCF',              data: cf['Free Cash Flow'] },
+        { label: 'CapEx',            data: cf['Capital Expenditure'] },
       ];
 
       const plEl = $('qFsPlTable'); if (plEl) plEl.innerHTML = buildTable(plRows, dates);

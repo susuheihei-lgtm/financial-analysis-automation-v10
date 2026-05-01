@@ -722,6 +722,11 @@ def parse_yfinance(ticker_symbol):
         hist_df = None
 
     try:
+        hist_daily_df = ticker.history(period='5y', interval='1d')
+    except Exception:
+        hist_daily_df = None
+
+    try:
         sustainability_df = ticker.sustainability
     except Exception:
         sustainability_df = None
@@ -1347,6 +1352,15 @@ def parse_yfinance(ticker_symbol):
         ts_data["price_monthly_dates"] = []
         ts_data["price_monthly"] = []
 
+    # ── 日次株価時系列 ───────────────────────────────────────────────────────
+    if hist_daily_df is not None and not hist_daily_df.empty and 'Close' in hist_daily_df.columns:
+        daily_series = hist_daily_df['Close'].dropna()
+        ts_data["price_daily_dates"] = [str(d.date()) if hasattr(d, 'date') else str(d) for d in daily_series.index]
+        ts_data["price_daily"] = [_sv(v) for v in daily_series.values]
+    else:
+        ts_data["price_daily_dates"] = []
+        ts_data["price_daily"] = []
+
     # ── アナリスト推奨サマリー（内訳件数）────────────────────────────────────
     try:
         rec_summary = ticker.get_recommendations_summary()
@@ -1390,16 +1404,32 @@ def parse_yfinance(ticker_symbol):
         except Exception:
             return None
 
-    def _extract_quarterly_rows(df, row_names, max_q=8):
-        if df is None or df.empty:
-            return {}, []
-        cols = list(df.columns[:max_q])
-        dates = [str(c.date()) if hasattr(c, 'date') else str(c) for c in cols]
+    def _unified_quarterly_dates(dfs, max_q=8):
+        """全DataFrameの日付を統合し最大max_q件を新しい順で返す"""
+        all_cols = set()
+        for df in dfs:
+            if df is not None and not df.empty:
+                all_cols.update(df.columns)
+        if not all_cols:
+            return []
+        sorted_cols = sorted(all_cols, reverse=True)[:max_q]
+        return [str(c.date()) if hasattr(c, 'date') else str(c) for c in sorted_cols], sorted_cols
+
+    def _extract_quarterly_aligned(df, row_names, unified_cols):
+        """統一日付列に揃えてデータ抽出（欠損はNone）"""
         result = {}
+        if df is None or df.empty or not unified_cols:
+            return result
         for row in row_names:
             if row in df.index:
-                result[row] = [_safe_val(df.loc[row, c]) for c in cols]
-        return result, dates
+                vals = []
+                for c in unified_cols:
+                    if c in df.columns:
+                        vals.append(_safe_val(df.loc[row, c]))
+                    else:
+                        vals.append(None)
+                result[row] = vals
+        return result
 
     try:
         qi_df = ticker.quarterly_income_stmt
@@ -1408,17 +1438,24 @@ def parse_yfinance(ticker_symbol):
     except Exception:
         qi_df = qb_df = qc_df = None
 
-    q_income, q_dates = _extract_quarterly_rows(qi_df, [
+    _unified_result = _unified_quarterly_dates([qi_df, qb_df, qc_df], max_q=8)
+    if _unified_result:
+        q_dates, _unified_cols = _unified_result
+    else:
+        q_dates, _unified_cols = [], []
+
+    q_income   = _extract_quarterly_aligned(qi_df, [
         'Total Revenue', 'Gross Profit', 'Operating Income',
         'Net Income', 'EBITDA', 'Diluted EPS',
-    ])
-    q_balance, _ = _extract_quarterly_rows(qb_df, [
+    ], _unified_cols)
+    q_balance  = _extract_quarterly_aligned(qb_df, [
         'Total Assets', 'Stockholders Equity', 'Total Debt',
         'Current Assets', 'Current Liabilities', 'Cash And Cash Equivalents',
-    ])
-    q_cashflow, _ = _extract_quarterly_rows(qc_df, [
+        'Ordinary Shares Number', 'Share Issued',
+    ], _unified_cols)
+    q_cashflow = _extract_quarterly_aligned(qc_df, [
         'Operating Cash Flow', 'Free Cash Flow', 'Capital Expenditure',
-    ])
+    ], _unified_cols)
 
     if q_dates:
         ts_data['quarterly'] = {

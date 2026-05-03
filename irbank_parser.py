@@ -1,15 +1,15 @@
 """
 IR BANK (irbank.net) から日本株の財務データを取得するパーサー。
 
-個別銘柄URL: https://f.irbank.net/files/{code}/fy-data-all.csv
-フォーマット: 複数セクション（業績/財務/CF/配当）が1ファイルに結合されたCSV
-提供年数: 最大約5年（IR BANK CSVの仕様上限）
+年次データ URL: https://f.irbank.net/files/{code}/fy-data-all.csv
+四半期データ URL: https://irbank.net/{code}/quarter (HTMLスクレイピング)
 
-キャッシュ先: data/irbank/{code}/fy-data-all.csv (24時間)
+キャッシュ先: data/irbank/{code}/fy-data-all.csv, q-data.json (24時間)
 """
-import io
+import calendar
+import json
 import logging
-import os
+import re
 import threading
 import time
 from pathlib import Path
@@ -21,17 +21,18 @@ try:
 except ImportError:
     _requests = None
 
+try:
+    from bs4 import BeautifulSoup as _BeautifulSoup
+except ImportError:
+    _BeautifulSoup = None
+
 # ── 設定 ─────────────────────────────────────────────────────────────────────
 _IRBANK_DIR = Path(__file__).parent / "data" / "irbank"
 _CACHE_TTL: float = 86400.0  # 24時間
 
-# 個別銘柄の全データ入りCSV
+# 個別銘柄の全データ入りCSV（年次）
 _FILE_ALL = "fy-data-all.csv"
 _BASE_URL = "https://f.irbank.net/files/{code}/" + _FILE_ALL
-
-# 四半期データCSV
-_FILE_Q = "q-data.csv"
-_BASE_URL_Q = "https://f.irbank.net/files/{code}/" + _FILE_Q
 
 _dl_lock = threading.Lock()
 
@@ -65,6 +66,24 @@ def _download_csv(code: str, filename: str, base_url: str) -> bytes | None:
         except Exception as e:
             logger.warning("IR BANK ダウンロード失敗 (%s / %s): %s", code, filename, e)
             return None
+
+
+def _fetch_html(url: str, timeout: int = 15) -> str | None:
+    """URL から HTML を取得（requests or urllib フォールバック）"""
+    headers = {"User-Agent": "FinancialAnalysisApp admin@example.com"}
+    try:
+        if _requests is not None:
+            resp = _requests.get(url, timeout=timeout, allow_redirects=True, headers=headers)
+            resp.raise_for_status()
+            return resp.text
+        else:
+            import urllib.request
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return r.read().decode("utf-8", errors="replace")
+    except Exception as e:
+        logger.warning("IR BANK HTML 取得失敗 (%s): %s", url, e)
+        return None
 
 
 def _download_company_csv(code: str) -> bytes | None:
@@ -265,143 +284,192 @@ def parse_irbank(code: str, max_years: int = 10) -> tuple[dict, dict, dict, list
     return inc_data, bs_data, cf_data, dates
 
 
-# ── 四半期データ ──────────────────────────────────────────────────────────────
+# ── 四半期データ（HTMLスクレイピング） ────────────────────────────────────────
 
-def _ym_to_quarter_end(ym: str) -> str | None:
-    """IR BANK の 'YYYY/MM' → 月末日付文字列 'YYYY-MM-DD'"""
-    import calendar
-    try:
-        y, m = int(ym[:4]), int(ym[5:7])
-        last_day = calendar.monthrange(y, m)[1]
-        return f"{y:04d}-{m:02d}-{last_day:02d}"
-    except Exception:
+def _quarter_end_date(fy_year: int, fy_month: int, q: int) -> str:
+    """FY終了年月とQ番号 → 四半期末日付 (YYYY-MM-DD)"""
+    end_m = fy_month - (4 - q) * 3
+    end_y = fy_year
+    while end_m <= 0:
+        end_m += 12
+        end_y -= 1
+    last_day = calendar.monthrange(end_y, end_m)[1]
+    return f"{end_y:04d}-{end_m:02d}-{last_day:02d}"
+
+
+def _parse_fy_label(text: str) -> tuple[int | None, int | None]:
+    """'2026年3月期連結' → (2026, 3)"""
+    m = re.search(r"(\d{4})年(\d{1,2})月期", text)
+    if m:
+        return int(m.group(1)), int(m.group(2))
+    return None, None
+
+
+def _parse_shihanki_value(td, unit_mult: float) -> float | None:
+    """TD要素の shihanki span から単季値を取得"""
+    if _BeautifulSoup is None:
         return None
+    shihanki = td.find("span", class_="shihanki")
+    if not shihanki:
+        return None
+    text = shihanki.get_text(strip=True).replace("+", "").replace(",", "").strip()
+    if not text or text == "-":
+        return None
+    try:
+        return float(text) * unit_mult
+    except ValueError:
+        return None
+
+
+def _scrape_quarterly_html(code: str, max_q: int = 8) -> dict | None:
+    """
+    irbank.net/{code}/quarter の「四半期毎履歴」テーブルをスクレイピングして
+    実績四半期データを返す。BeautifulSoup が必要。
+    """
+    if _BeautifulSoup is None:
+        logger.warning("IR BANK 四半期HTML: BeautifulSoup4 が未インストール（pip install beautifulsoup4）")
+        return None
+
+    html = _fetch_html(f"https://irbank.net/{code}/quarter")
+    if not html:
+        return None
+
+    soup = _BeautifulSoup(html, "html.parser")
+
+    # 「四半期毎履歴」キャプション付きテーブルを検索
+    hist_table = None
+    unit_mult: float = 1_000_000  # デフォルト: 百万円
+    for t in soup.find_all("table"):
+        cap = t.find("caption")
+        if cap and "四半期毎履歴" in cap.get_text():
+            hist_table = t
+            cap_text = cap.get_text()
+            if "億円" in cap_text:
+                unit_mult = 100_000_000.0
+            elif "百万円" in cap_text:
+                unit_mult = 1_000_000.0
+            elif "千円" in cap_text:
+                unit_mult = 1_000.0
+            break
+
+    if hist_table is None:
+        logger.info("IR BANK 四半期HTML: %s — 四半期毎履歴テーブル未検出", code)
+        return None
+
+    tbody = hist_table.find("tbody")
+    if not tbody:
+        return None
+
+    records: list[dict] = []
+    current_fy_year: int | None = None
+    current_fy_month: int | None = None
+    td_buffer: list = []
+
+    def _process_row(q_td, data_tds: list, fy_year: int, fy_month: int) -> None:
+        # co_red = 実績のみ取得（co_gr=予想 / co_br=修正 はスキップ）
+        if not q_td.find("span", class_="co_red"):
+            return
+        q_text = q_td.get_text(strip=True)
+        q_num = re.search(r"(\d+)Q", q_text)
+        if not q_num:
+            return
+        q = int(q_num.group(1))
+        date_str = _quarter_end_date(fy_year, fy_month, q)
+        vals = [_parse_shihanki_value(td, unit_mult) for td in data_tds[:4]]
+        records.append({
+            "date":             date_str,
+            "revenue":          vals[0] if len(vals) > 0 else None,
+            "op_income":        vals[1] if len(vals) > 1 else None,
+            "ordinary_income":  vals[2] if len(vals) > 2 else None,
+            "net_income":       vals[3] if len(vals) > 3 else None,
+        })
+
+    for child in tbody.children:
+        if not hasattr(child, "name") or not child.name:
+            continue
+
+        if child.name == "tr":
+            td_buffer = []  # 新FY開始でバッファリセット
+            tds = child.find_all("td")
+            if not tds:
+                continue
+            if tds[0].get("rowspan"):
+                fy_text = tds[0].get_text(strip=True)
+                current_fy_year, current_fy_month = _parse_fy_label(fy_text)
+                if len(tds) >= 7 and current_fy_year and current_fy_month:
+                    _process_row(tds[1], tds[2:7], current_fy_year, current_fy_month)
+
+        elif child.name == "td" and current_fy_year and current_fy_month:
+            td_buffer.append(child)
+            if len(td_buffer) == 6:
+                _process_row(td_buffer[0], td_buffer[1:], current_fy_year, current_fy_month)
+                td_buffer = []
+
+    if not records:
+        logger.info("IR BANK 四半期HTML: %s — 実績データなし", code)
+        return None
+
+    # 新しい順にソートしてmax_q件に絞る
+    records.sort(key=lambda r: r["date"], reverse=True)
+    records = records[:max_q]
+
+    dates = [r["date"] for r in records]
+
+    def _build_list(key: str) -> list | None:
+        vals = [r[key] for r in records]
+        return vals if any(v is not None for v in vals) else None
+
+    income: dict[str, list] = {}
+    for src_key, dst_key in [
+        ("revenue",         "Total Revenue"),
+        ("op_income",       "Operating Income"),
+        ("net_income",      "Net Income"),
+        ("ordinary_income", "Pretax Income"),
+    ]:
+        lst = _build_list(src_key)
+        if lst is not None:
+            income[dst_key] = lst
+
+    logger.info(
+        "IR BANK 四半期HTML取得成功: %s (%dQ / %s〜%s)",
+        code, len(dates),
+        dates[-1] if dates else "-",
+        dates[0]  if dates else "-",
+    )
+    return {"dates": dates, "income": income, "balance": {}, "cashflow": {}}
 
 
 def parse_irbank_quarterly(code: str, max_q: int = 8) -> dict | None:
     """
-    IR BANK の四半期CSV（q-data.csv）から四半期財務データを取得。
+    IR BANK から四半期財務データを取得（HTMLスクレイピング）。
+    キャッシュ: data/irbank/{code}/q-data.json (24時間)
 
     Returns:
         {
-          'dates':    ['2024-12-31', '2024-09-30', ...],  # 新しい順
+          'dates':    ['2025-12-31', '2025-09-30', ...],  # 新しい順
           'income':   {'Total Revenue': [...], 'Operating Income': [...], ...},
-          'balance':  {'Total Assets': [...], 'Stockholders Equity': [...], ...},
-          'cashflow': {'Operating Cash Flow': [...], ...},
+          'balance':  {},
+          'cashflow': {},
         }
         または None（データなし）
     """
-    raw = _download_csv(code, _FILE_Q, _BASE_URL_Q)
-    if raw is None:
-        return None
+    cache_path = _IRBANK_DIR / code / "q-data.json"
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
 
-    sections = _parse_multisection_csv(raw)
-    if not sections:
-        logger.info("IR BANK 四半期: コード %s のセクションデータなし", code)
-        return None
+    # キャッシュヒット
+    if cache_path.exists() and (time.time() - cache_path.stat().st_mtime) < _CACHE_TTL:
+        try:
+            cached = json.loads(cache_path.read_text(encoding="utf-8"))
+            if cached.get("dates"):
+                logger.info("IR BANK 四半期キャッシュ使用: %s", code)
+                return cached
+        except Exception:
+            pass
 
-    pl_rows = sorted(
-        sections.get("業績", []),
-        key=lambda r: r.get("年度", ""),
-        reverse=True,
-    )[:max_q]
-
-    if not pl_rows:
-        return None
-
-    # 年度文字列 → 月末日付
-    dates = []
-    for r in pl_rows:
-        ym = r.get("年度", "")
-        d = _ym_to_quarter_end(ym)
-        if d:
-            dates.append(d)
-        else:
-            dates.append(ym)
-
-    n = len(dates)
-    bs_rows = sorted(sections.get("財務", []), key=lambda r: r.get("年度", ""), reverse=True)[:max_q]
-    cf_rows = sorted(sections.get("CF",   []), key=lambda r: r.get("年度", ""), reverse=True)[:max_q]
-
-    bs_by_ym = {r.get("年度", ""): r for r in bs_rows}
-    cf_by_ym = {r.get("年度", ""): r for r in cf_rows}
-    pl_yms   = [r.get("年度", "") for r in pl_rows]
-
-    def _bs(col: str, ym: str) -> float | None:
-        return _safe_float(bs_by_ym.get(ym, {}).get(col))
-
-    def _cf(col: str, ym: str) -> float | None:
-        return _safe_float(cf_by_ym.get(ym, {}).get(col))
-
-    # 損益
-    rev_list  = [_safe_float(r.get("売上高"))   for r in pl_rows]
-    opi_list  = [_safe_float(r.get("営業利益")) for r in pl_rows]
-    ni_list   = [_safe_float(r.get("純利益"))   for r in pl_rows]
-    eps_list  = [_safe_float(r.get("EPS"))       for r in pl_rows]
-    gp_list   = [_safe_float(r.get("売上総利益")) for r in pl_rows]
-    # 経常利益 → Pretax Income の近似
-    pret_list = [_safe_float(r.get("経常利益")) for r in pl_rows]
-
-    income: dict[str, list] = {}
-    if any(v is not None for v in rev_list):
-        income['Total Revenue'] = rev_list
-    if any(v is not None for v in opi_list):
-        income['Operating Income'] = opi_list
-    if any(v is not None for v in ni_list):
-        income['Net Income'] = ni_list
-    if any(v is not None for v in eps_list):
-        income['Diluted EPS'] = eps_list
-    if any(v is not None for v in gp_list):
-        income['Gross Profit'] = gp_list
-    if any(v is not None for v in pret_list):
-        income['Pretax Income'] = pret_list
-
-    # 貸借対照表
-    ta_list  = [_bs("総資産",   ym) for ym in pl_yms]
-    eq_list  = [_bs("株主資本", ym) for ym in pl_yms]
-    bs_short = [_bs("短期借入金", ym) for ym in pl_yms]
-    bs_long  = [_bs("長期借入金",  ym) for ym in pl_yms]
-    td_list  = [(s or 0) + (l or 0) if (s is not None or l is not None) else None
-                for s, l in zip(bs_short, bs_long)]
-    ca_list  = [_bs("流動資産",   ym) for ym in pl_yms]
-    cl_list  = [_bs("流動負債",   ym) for ym in pl_yms]
-    cash_list_q = [_cf("現金同等物", ym) for ym in pl_yms]
-
-    balance: dict[str, list] = {}
-    if any(v is not None for v in ta_list):
-        balance['Total Assets'] = ta_list
-    if any(v is not None for v in eq_list):
-        balance['Stockholders Equity'] = eq_list
-    if any(v is not None for v in td_list):
-        balance['Total Debt'] = td_list
-    if any(v is not None for v in ca_list):
-        balance['Current Assets'] = ca_list
-    if any(v is not None for v in cl_list):
-        balance['Current Liabilities'] = cl_list
-    if any(v is not None for v in cash_list_q):
-        balance['Cash And Cash Equivalents'] = cash_list_q
-
-    # キャッシュフロー
-    ocf_list_q   = [_cf("営業CF",   ym) for ym in pl_yms]
-    capex_list_q = [_cf("設備投資", ym) for ym in pl_yms]
-    capex_list_q = [-abs(v) if v is not None else None for v in capex_list_q]
-    inv_cf_list  = [_cf("投資CF",   ym) for ym in pl_yms]
-    fin_cf_list  = [_cf("財務CF",   ym) for ym in pl_yms]
-
-    cashflow: dict[str, list] = {}
-    if any(v is not None for v in ocf_list_q):
-        cashflow['Operating Cash Flow'] = ocf_list_q
-    if any(v is not None for v in capex_list_q):
-        cashflow['Capital Expenditure'] = capex_list_q
-    if any(v is not None for v in inv_cf_list):
-        cashflow['Investing Cash Flow'] = inv_cf_list
-    if any(v is not None for v in fin_cf_list):
-        cashflow['Financing Cash Flow'] = fin_cf_list
-
-    if not income and not balance:
-        logger.info("IR BANK 四半期: コード %s — 有効データなし", code)
-        return None
-
-    logger.info("IR BANK 四半期取得成功: %s (%dQ / %s〜%s)", code, n,
-                dates[-1] if dates else "-", dates[0] if dates else "-")
-    return {'dates': dates, 'income': income, 'balance': balance, 'cashflow': cashflow}
+    result = _scrape_quarterly_html(code, max_q=max_q)
+    if result:
+        try:
+            cache_path.write_text(json.dumps(result, ensure_ascii=False), encoding="utf-8")
+        except Exception as e:
+            logger.warning("IR BANK 四半期キャッシュ保存失敗: %s", e)
+    return result

@@ -75,61 +75,154 @@ _HARDCODED_CODE_MAP = {
 # 同一 key に複数 local_name がある場合、最初に見つかったものを採用する
 
 _XBRL_MAP: dict[str, str] = {
-    # ── 売上高 ──
-    "NetSales":                                 "revenue",
-    "NetSalesAndOperatingRevenues":             "revenue",
-    "OperatingRevenue":                         "revenue",
-    "Revenue":                                  "revenue",
-    "RevenueFromContractsWithCustomers":        "revenue",
-    "Revenues":                                 "revenue",
-    # ── 営業利益 ──
-    "OperatingIncome":                          "op_income",
-    "OperatingProfit":                          "op_income",
-    "ProfitFromOperatingActivities":            "op_income",
-    "OperatingIncomeLoss":                      "op_income",
-    # ── 純利益（親会社株主） ──
-    "ProfitAttributableToOwnersOfParent":       "net_income",
-    "ProfitLossAttributableToOwnersOfParent":   "net_income",
-    "ProfitLoss":                               "net_income",
-    "NetIncome":                                "net_income",
-    # ── 売上総利益 ──
-    "GrossProfit":                              "gross_profit",
-    # ── 経常利益（JP-GAAP固有） ──
-    "OrdinaryIncome":                           "ordinary_income",
-    # ── EPS ──
-    "BasicEarningsLossPerShare":                "eps",
-    "BasicEarningsPerShare":                    "eps",
-    "EarningsPerShare":                         "eps",
-    # ── 貸借対照表 ──
-    "Assets":                                   "total_assets",
-    "TotalAssets":                              "total_assets",
-    "NetAssets":                                "net_assets",
-    "Equity":                                   "total_equity",
-    "EquityAttributableToOwnersOfParent":       "total_equity",
-    "ShareholdersEquity":                       "total_equity",
-    "RetainedEarnings":                         "retained_earnings",
-    "CashAndCashEquivalents":                   "cash",
-    "CashAndCashEquivalentsAtEndOfPeriod":      "cash",
-    "CurrentAssets":                            "current_assets",
-    "CurrentLiabilities":                       "current_liab",
-    "ShortTermLoansPayable":                    "short_term_debt",
-    "LongTermLoansPayable":                     "long_term_debt",
-    "BondsPayable":                             "bonds_payable",
-    "Inventory":                                "inventory",
-    "AccountsAndNotesReceivableTrade":          "receivables",
-    "PropertyPlantAndEquipmentNet":             "fixed_assets",
-    "NoncurrentAssets":                         "noncurrent_assets",
-    # ── キャッシュフロー ──
-    "CashFlowsFromOperatingActivities":                  "ocf",
-    "NetCashProvidedByUsedInOperatingActivities":        "ocf",
-    "CashFlowsFromInvestingActivities":                  "investing_cf",
-    "NetCashProvidedByUsedInInvestingActivities":        "investing_cf",
-    "CashFlowsFromFinancingActivities":                  "financing_cf",
-    "NetCashProvidedByUsedInFinancingActivities":        "financing_cf",
-    "PurchaseOfPropertyPlantAndEquipment":               "capex",
-    "PurchaseOfFixedAssets":                             "capex",
-    "DepreciationAndAmortization":                       "da",
-    "Depreciation":                                      "da",
+    # ━━ 売上高 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    # US-GAAP サマリー（jpcrp / 旧 US-GAAP 報告会社向け）
+    "RevenuesUSGAAPSummaryOfBusinessResults":                             "revenue",
+    # IFRS（jpigp）
+    "SalesRevenuesIFRS":                                                  "revenue",
+    "TotalNetRevenuesIFRS":                                               "revenue",
+    "OperatingRevenueFromExternalCustomersIFRS":                          "revenue",
+    "SalesOfProductsIFRS":                                                "revenue",
+    # IFRS サマリー（jpcrp / 5年分）
+    "OperatingRevenuesIFRSKeyFinancialData":                              "revenue",
+    "NetSalesKeyFinancialData":                                           "revenue",
+    "NetSalesAndOperatingRevenuesKeyFinancialData":                       "revenue",
+    # JP-GAAP（jppfs）
+    "NetSales":                                                           "revenue",
+    "NetSalesAndOperatingRevenues":                                       "revenue",
+    "OperatingRevenue":                                                   "revenue",
+    "Revenue":                                                            "revenue",
+    "RevenueFromContractsWithCustomers":                                  "revenue",
+    "Revenues":                                                           "revenue",
+    # JP-GAAP サマリー（jpcrp）
+    "NetSalesSummaryOfBusinessResults":                                   "revenue",
+    "NetSalesAndOperatingRevenuesSummaryOfBusinessResults":               "revenue",
+
+    # ━━ 営業利益 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    "OperatingProfitLossIFRS":                                            "op_income",
+    "OperatingIncome":                                                    "op_income",
+    "OperatingProfit":                                                    "op_income",
+    "ProfitFromOperatingActivities":                                      "op_income",
+    "OperatingIncomeLoss":                                                "op_income",
+    "OperatingIncomeSummaryOfBusinessResults":                            "op_income",
+    "OperatingIncomeUSGAAPSummaryOfBusinessResults":                      "op_income",
+    # JP-GAAP では経常利益が5年サマリーに含まれる（営業利益の代替）
+    "OrdinaryIncomeLossSummaryOfBusinessResults":                         "op_income",
+
+    # ━━ 純利益（親会社株主） ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    # IFRS
+    "ProfitLossAttributableToOwnersOfParentIFRS":                         "net_income",
+    "ProfitLossAttributableToOwnersOfParentIFRSSummaryOfBusinessResults": "net_income",
+    "ProfitLossIFRS":                                                     "net_income",
+    # US-GAAP
+    "NetIncomeLossAttributableToOwnersOfParentUSGAAPSummaryOfBusinessResults": "net_income",
+    # JP-GAAP（jppfs 2年 + jpcrp 5年）
+    "ProfitLossAttributableToOwnersOfParent":                             "net_income",
+    "ProfitLossAttributableToOwnersOfParentSummaryOfBusinessResults":     "net_income",
+    "ProfitAttributableToOwnersOfParent":                                 "net_income",
+    "ProfitAttributableToOwnersOfParentSummaryOfBusinessResults":         "net_income",
+    "ProfitLoss":                                                         "net_income",
+    "NetIncome":                                                          "net_income",
+    "NetIncomeLossSummaryOfBusinessResults":                              "net_income",
+
+    # ━━ 税引前利益 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    "ProfitLossBeforeTaxIFRS":                                            "pretax_income",
+    "ProfitLossBeforeTaxIFRSSummaryOfBusinessResults":                    "pretax_income",
+    "ProfitLossBeforeTaxUSGAAPSummaryOfBusinessResults":                  "pretax_income",
+    "OrdinaryIncome":                                                     "pretax_income",
+    "IncomeBeforeIncomeTaxes":                                            "pretax_income",
+
+    # ━━ 売上総利益 / COGS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    "CostOfSalesIFRS":                                                    "cogs",
+    "GrossProfit":                                                        "gross_profit",
+
+    # ━━ EPS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    "BasicEarningsLossPerShareUSGAAPSummaryOfBusinessResults":            "eps",
+    "BasicEarningsLossPerShareIFRSSummaryOfBusinessResults":              "eps",
+    "BasicEarningsLossPerShare":                                          "eps",
+    "BasicEarningsPerShare":                                              "eps",
+    "EarningsPerShare":                                                   "eps",
+    "BasicEarningsPerShareSummaryOfBusinessResults":                      "eps",
+
+    # ━━ 貸借対照表 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    # 総資産
+    "TotalAssetsUSGAAPSummaryOfBusinessResults":                          "total_assets",
+    "TotalAssetsIFRSSummaryOfBusinessResults":                            "total_assets",
+    "AssetsIFRS":                                                         "total_assets",
+    "Assets":                                                             "total_assets",
+    "TotalAssets":                                                        "total_assets",
+    "TotalAssetsSummaryOfBusinessResults":                                "total_assets",
+    # 純資産・自己資本
+    "EquityIncludingPortionAttributableToNonControllingInterestUSGAAPSummaryOfBusinessResults": "total_equity",
+    "EquityAttributableToOwnersOfParentIFRS":                             "total_equity",
+    "EquityAttributableToOwnersOfParentIFRSSummaryOfBusinessResults":     "total_equity",
+    "EquityIFRS":                                                         "total_equity",
+    "NetAssets":                                                          "total_equity",
+    "Equity":                                                             "total_equity",
+    "EquityAttributableToOwnersOfParent":                                 "total_equity",
+    "ShareholdersEquity":                                                 "total_equity",
+    "NetAssetsSummaryOfBusinessResults":                                  "total_equity",
+    # 流動資産・流動負債
+    "CurrentAssetsIFRS":                                                  "current_assets",
+    "CurrentAssets":                                                      "current_assets",
+    "TotalCurrentLiabilitiesIFRS":                                        "current_liab",
+    "CurrentLiabilities":                                                 "current_liab",
+    # 現金
+    "CashAndCashEquivalentsUSGAAPSummaryOfBusinessResults":               "cash",
+    "CashAndCashEquivalentsIFRS":                                         "cash",
+    "CashAndCashEquivalentsIFRSSummaryOfBusinessResults":                 "cash",
+    "CashAndCashEquivalentsSummaryOfBusinessResults":                     "cash",
+    "CashAndCashEquivalents":                                             "cash",
+    "CashAndCashEquivalentsAtEndOfPeriod":                                "cash",
+    # 棚卸資産
+    "InventoriesCAIFRS":                                                  "inventory",
+    "Inventory":                                                          "inventory",
+    "Inventories":                                                        "inventory",
+    # 売上債権
+    "TradeAndOtherReceivablesCAIFRS":                                     "receivables",
+    "AccountsAndNotesReceivableTrade":                                    "receivables",
+    # 有形固定資産
+    "PropertyPlantAndEquipmentIFRS":                                      "fixed_assets",
+    "PropertyPlantAndEquipmentNet":                                       "fixed_assets",
+    # 借入金
+    "InterestBearingLiabilitiesCLIFRS":                                   "short_term_debt",
+    "ShortTermLoansPayable":                                              "short_term_debt",
+    "InterestBearingLiabilitiesNCLIFRS":                                  "long_term_debt",
+    "LongTermLoansPayable":                                               "long_term_debt",
+    "BondsPayable":                                                       "bonds_payable",
+    "RetainedEarnings":                                                   "retained_earnings",
+    "NoncurrentAssetsIFRS":                                               "noncurrent_assets",
+    "NoncurrentAssets":                                                   "noncurrent_assets",
+
+    # ━━ キャッシュフロー ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    "CashFlowsFromUsedInOperatingActivitiesUSGAAPSummaryOfBusinessResults":    "ocf",
+    "NetCashProvidedByUsedInOperatingActivitiesIFRS":                         "ocf",
+    "CashFlowsFromUsedInOperatingActivitiesIFRSSummaryOfBusinessResults":     "ocf",
+    "CashFlowsFromOperatingActivities":                                       "ocf",
+    "NetCashProvidedByUsedInOperatingActivities":                             "ocf",
+    "CashFlowsFromOperatingActivitiesSummaryOfBusinessResults":               "ocf",
+    "NetCashProvidedByUsedInOperatingActivitiesSummaryOfBusinessResults":     "ocf",
+
+    "CashFlowsFromUsedInInvestingActivitiesUSGAAPSummaryOfBusinessResults":   "investing_cf",
+    "NetCashProvidedByUsedInInvestingActivitiesIFRS":                         "investing_cf",
+    "CashFlowsFromUsedInInvestingActivitiesIFRSSummaryOfBusinessResults":     "investing_cf",
+    "CashFlowsFromInvestingActivities":                                       "investing_cf",
+    "NetCashProvidedByUsedInInvestingActivities":                             "investing_cf",
+    "NetCashProvidedByUsedInInvestingActivitiesSummaryOfBusinessResults":     "investing_cf",
+
+    "CashFlowsFromUsedInFinancingActivitiesUSGAAPSummaryOfBusinessResults":   "financing_cf",
+    "NetCashProvidedByUsedInFinancingActivitiesIFRS":                         "financing_cf",
+    "CashFlowsFromUsedInFinancingActivitiesIFRSSummaryOfBusinessResults":     "financing_cf",
+    "CashFlowsFromFinancingActivities":                                       "financing_cf",
+    "NetCashProvidedByUsedInFinancingActivities":                             "financing_cf",
+    "NetCashProvidedByUsedInFinancingActivitiesSummaryOfBusinessResults":     "financing_cf",
+
+    "PurchaseOfPropertyPlantAndEquipment":                                "capex",
+    "PurchaseOfFixedAssets":                                              "capex",
+    "DepreciationAndAmortizationOperatingExpensesIFRS":                   "da",
+    "DepreciationAndAmortizationOpeCFIFRS":                               "da",
+    "DepreciationAndAmortization":                                        "da",
+    "Depreciation":                                                       "da",
 }
 
 
@@ -220,22 +313,24 @@ def _get_doc_list_for_date(q_date: date, api_key: str) -> list[dict]:
         return []
 
 
-def _find_doc_id(edinet_code: str, fy_end_year: int, fy_end_month: int, api_key: str) -> str | None:
+def _find_doc_id(sec_code: str, fy_end_year: int, fy_end_month: int, api_key: str) -> str | None:
     """
-    有価証券報告書（docTypeCode=120）の docID を検索する。
-    FY終了月の3ヶ月後（提出期限月）を月末から逆順で最大30日検索。
+    有価証券報告書（docTypeCode=120）の docID を証券コードで検索する。
+    FY終了月の3ヶ月後（提出期限月）を月末から逆順で最大60日検索。
     結果は data/edinet/docids/ にキャッシュ（空ファイル = 存在なし）。
+
+    EDINET の secCode フィールドは 5桁（末尾0付き）のため先頭4桁で照合。
     """
     # ── キャッシュ確認 ──
     cache_dir = _DIR / "docids"
     cache_dir.mkdir(parents=True, exist_ok=True)
-    cache_file = cache_dir / f"{edinet_code}_{fy_end_year}.txt"
+    cache_file = cache_dir / f"{sec_code}_{fy_end_year}.txt"
 
     if cache_file.exists():
         val = cache_file.read_text().strip()
         return val if val else None
 
-    # ── 提出期限月を計算 ──
+    # ── 提出期限月を計算（3ヶ月後が期限の基準） ──
     filing_month = fy_end_month + 3
     filing_year  = fy_end_year
     if filing_month > 12:
@@ -245,10 +340,11 @@ def _find_doc_id(edinet_code: str, fy_end_year: int, fy_end_month: int, api_key:
     max_day = monthrange(filing_year, filing_month)[1]
     today   = date.today()
 
-    for day in range(max_day, max_day - 30, -1):
-        if day < 1:
-            break
-        q = date(filing_year, filing_month, day)
+    # 提出期限月から最大60日（前後の月もカバー）逆順で検索
+    from datetime import timedelta
+    start_date = date(filing_year, filing_month, max_day)
+    for delta in range(0, 60):
+        q = start_date - timedelta(days=delta)
         if q > today:
             continue
 
@@ -256,16 +352,17 @@ def _find_doc_id(edinet_code: str, fy_end_year: int, fy_end_month: int, api_key:
         time.sleep(_RATE_LIMIT_SEC)
 
         for doc in docs:
-            if (doc.get("edinetCode") == edinet_code
+            doc_sec = (doc.get("secCode") or "")[:4]
+            if (doc_sec == sec_code[:4]
                     and doc.get("docTypeCode") == _DOC_TYPE_ANNUAL):
                 doc_id = doc.get("docID", "")
                 cache_file.write_text(doc_id)
-                logger.info("EDINET docID発見: %s FY%d → %s (提出日: %s)",
-                            edinet_code, fy_end_year, doc_id, q)
+                logger.info("EDINET docID発見: %s FY%d → %s (提出日: %s, edinetCode: %s)",
+                            sec_code, fy_end_year, doc_id, q, doc.get("edinetCode", ""))
                 return doc_id
 
     cache_file.write_text("")  # 見つからなかった記録
-    logger.debug("EDINET: %s FY%d の有価証券報告書なし", edinet_code, fy_end_year)
+    logger.debug("EDINET: %s FY%d の有価証券報告書なし", sec_code, fy_end_year)
     return None
 
 
@@ -320,78 +417,68 @@ def _extract_main_xbrl(zip_bytes: bytes) -> str | None:
         return None
 
 
-def _parse_xbrl(xbrl_text: str, fy_end_year: int) -> dict | None:
+def _parse_xbrl_all_years(xbrl_text: str) -> dict[int, dict]:
     """
-    XBRL XML テキストから財務データを抽出して {internal_key: float_value} を返す。
+    XBRL XML テキストから全会計年度の財務データを一括抽出。
 
-    コンテキスト選択ルール（優先順）:
-      1. コンテキストID に "CurrentYear" を含む
-      2. end/instant が fy_end_year に一致
-      3. フォールバック: 全コンテキスト（年度検出失敗時）
+    コンテキストの end/instant 日付から FY 年を自動判定し
+    {fy_year: {internal_key: float_value}} を返す。
+    セグメント別コンテキスト（*Member付き）はスキップ。
     """
     try:
         root = ET.fromstring(xbrl_text.encode("utf-8"))
     except ET.ParseError as e:
         logger.warning("XBRL XML パースエラー: %s", e)
-        return None
+        return {}
 
-    # ── コンテキスト収集 ──
-    contexts: dict[str, dict] = {}
+    # ── コンテキスト ID → FY 年 マッピング ──
+    # XBRL コンテキスト構造: <context id="..."><period><endDate>YYYY-...</endDate></period></context>
+    # endDate/instant は context の孫要素（period の子）なので iter() で再帰的に探す
+    ctx_to_year: dict[str, int] = {}
     for elem in root.iter():
         local = elem.tag.split("}")[-1] if "}" in elem.tag else elem.tag
         if local != "context":
             continue
         ctx_id = elem.get("id", "")
-        info: dict[str, str] = {}
-        for child in elem:
-            cl = child.tag.split("}")[-1] if "}" in child.tag else child.tag
-            if cl == "startDate":
-                info["start"] = child.text or ""
-            elif cl == "endDate":
-                info["end"] = child.text or ""
-            elif cl == "instant":
-                info["instant"] = child.text or ""
-        if info:
-            contexts[ctx_id] = info
-
-    # ── 当期コンテキストを特定 ──
-    fy_str = str(fy_end_year)
-    valid_ctx: set[str] = set()
-
-    for ctx_id, info in contexts.items():
-        if "CurrentYear" in ctx_id:
-            valid_ctx.add(ctx_id)
+        # セグメント次元コンテキストを除外（"_" かつ "Member" を含む）
+        if "_" in ctx_id and "Member" in ctx_id:
             continue
-        end     = info.get("end", "")
-        instant = info.get("instant", "")
-        if (end and end[:4] == fy_str) or (instant and instant[:4] == fy_str):
-            valid_ctx.add(ctx_id)
+        for sub in elem.iter():
+            sl = sub.tag.split("}")[-1] if "}" in sub.tag else sub.tag
+            if sl in ("endDate", "instant") and sub.text:
+                try:
+                    ctx_to_year[ctx_id] = int(sub.text[:4])
+                except ValueError:
+                    pass
+                break
 
-    if not valid_ctx:
-        # フォールバック: 全コンテキスト使用
-        valid_ctx = set(contexts.keys())
+    if not ctx_to_year:
+        return {}
 
     # ── 財務値を抽出 ──
-    result: dict[str, float] = {}
+    result: dict[int, dict] = {}
     for elem in root.iter():
         text = (elem.text or "").strip()
         if not text:
             continue
         local   = elem.tag.split("}")[-1] if "}" in elem.tag else elem.tag
         ctx_ref = elem.get("contextRef", "")
-        if ctx_ref not in valid_ctx:
+        year    = ctx_to_year.get(ctx_ref)
+        if year is None:
             continue
         key = _XBRL_MAP.get(local)
         if key is None:
             continue
         try:
             val = float(text)
-            if key not in result:   # 最初に見つかった値を採用
-                result[key] = val
+            if year not in result:
+                result[year] = {}
+            if key not in result[year]:   # 最初に見つかった値を採用
+                result[year][key] = val
         except ValueError:
             pass
 
-    return result if result else None
+    return result
 
 
 # ── メインエントリポイント ─────────────────────────────────────────────────────
@@ -423,76 +510,90 @@ def parse_edinet(
     if _req is None:
         return None
 
-    edinet_code = _to_edinet_code(sec_code)
-    if not edinet_code:
-        logger.warning("EDINET: 証券コード %s のEDINETコードが見つかりません", sec_code)
-        return None
-
     # ── 全体キャッシュ確認 ──
     _DIR.mkdir(parents=True, exist_ok=True)
     summary_cache = _DIR / f"{sec_code}_summary.json"
     if summary_cache.exists() and (time.time() - summary_cache.stat().st_mtime) < _CACHE_TTL:
         try:
             cached = json.loads(summary_cache.read_text())
-            if cached.get("dates"):
-                logger.info("EDINET キャッシュヒット: %s (%d年分)", sec_code, len(cached["dates"]))
-                return cached["inc_data"], cached["bs_data"], cached["cf_data"], cached["dates"]
+            cached_dates = cached.get("dates", [])
+            # max_years > 5 なのにキャッシュが5年以下ならキャッシュを無視して再取得
+            if cached_dates and len(cached_dates) >= min(max_years, 5 if max_years <= 5 else 10):
+                logger.info("EDINET キャッシュヒット: %s (%d年分)", sec_code, len(cached_dates))
+                return cached["inc_data"], cached["bs_data"], cached["cf_data"], cached_dates
         except Exception:
             pass
 
-    # ── 最新FY年を計算 ──
+    # ── 最新FY年を計算（未提出の場合は1年前にフォールバック） ──
     today = date.today()
-    # 今年の FY がすでに終わっているかチェック
     if today.month > fy_end_month or (today.month == fy_end_month and today.day >= 20):
-        latest_fy_year = today.year
+        candidate = today.year
     else:
-        latest_fy_year = today.year - 1
+        candidate = today.year - 1
 
-    # ── 各年の財務データを収集 ──
+    # 最大2年前まで試して実際に存在する最新 FY を特定
+    latest_fy_year = None
+    for try_year in range(candidate, candidate - 3, -1):
+        if _find_doc_id(sec_code, try_year, fy_end_month, api_key):
+            latest_fy_year = try_year
+            break
+    if latest_fy_year is None:
+        logger.warning("EDINET: %s の有価証券報告書が見つかりません", sec_code)
+        return None
+
+    # ── XBRL 一括取得（最大2ファイルで10年分） ──
+    # 1つのXBRLに5年分(Current+Prior1〜4)のサマリーが含まれるため
+    # 最新XBRLと5年前のXBRLの2本で足りる
     yearly: dict[int, dict] = {}
     yearly_cache_dir = _DIR / "yearly"
     yearly_cache_dir.mkdir(parents=True, exist_ok=True)
 
-    for offset in range(max_years):
-        fy_year    = latest_fy_year - offset
-        year_cache = yearly_cache_dir / f"{sec_code}_{fy_year}.json"
+    fetch_targets = [latest_fy_year]
+    if max_years > 5:
+        fetch_targets.append(latest_fy_year - 5)
 
-        # 年別キャッシュ確認
-        if year_cache.exists():
+    for base_fy in fetch_targets:
+        xbrl_cache = yearly_cache_dir / f"{sec_code}_xbrl_{base_fy}.json"
+
+        if xbrl_cache.exists():
             try:
-                data = json.loads(year_cache.read_text())
-                if data:
-                    yearly[fy_year] = data
+                cached_batch = json.loads(xbrl_cache.read_text())
+                for yr_str, data in cached_batch.items():
+                    yr = int(yr_str)
+                    if data and yr not in yearly:
+                        yearly[yr] = data
+                logger.debug("EDINET XBRLキャッシュヒット: %s FY%d (%d年分)", sec_code, base_fy, len(cached_batch))
+                continue
             except Exception:
                 pass
-            continue
 
-        # DocID 検索
-        doc_id = _find_doc_id(edinet_code, fy_year, fy_end_month, api_key)
+        doc_id = _find_doc_id(sec_code, base_fy, fy_end_month, api_key)
         if not doc_id:
-            year_cache.write_text("{}")
+            xbrl_cache.write_text("{}")
             continue
 
-        # XBRL ZIP ダウンロード
         zip_bytes = _download_xbrl_zip(doc_id, api_key)
         if not zip_bytes:
-            year_cache.write_text("{}")
+            xbrl_cache.write_text("{}")
             continue
         time.sleep(_RATE_LIMIT_SEC)
 
-        # XBRL 解析
-        xbrl_text = _extract_main_xbrl(zip_bytes)
-        if not xbrl_text:
-            year_cache.write_text("{}")
+        xbrl_txt = _extract_main_xbrl(zip_bytes)
+        if not xbrl_txt:
+            xbrl_cache.write_text("{}")
             continue
 
-        parsed = _parse_xbrl(xbrl_text, fy_year)
-        if parsed:
-            yearly[fy_year] = parsed
-            year_cache.write_text(json.dumps(parsed))
-            logger.info("EDINET: FY%d 解析完了 (%s / %d項目)", fy_year, sec_code, len(parsed))
+        batch = _parse_xbrl_all_years(xbrl_txt)
+        if batch:
+            xbrl_cache.write_text(json.dumps({str(k): v for k, v in batch.items()}))
+            for yr, data in batch.items():
+                if yr not in yearly:
+                    yearly[yr] = data
+            logger.info("EDINET: FY%d XBRL解析完了 (%s / %d年分: %s)",
+                        base_fy, sec_code, len(batch),
+                        ", ".join(str(y) for y in sorted(batch.keys(), reverse=True)))
         else:
-            year_cache.write_text("{}")
+            xbrl_cache.write_text("{}")
 
     if not yearly:
         logger.warning("EDINET: %s のデータが取得できませんでした", sec_code)

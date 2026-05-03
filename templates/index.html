@@ -867,8 +867,8 @@
             <div class="mb-6 tab-nav-wrap">
               <nav class="flex gap-0 border-b overflow-x-auto scrollbar-hide" id="qInnerTabNav" style="border-color:var(--border-s)">
                 <button class="q-inner-tab q-inner-active px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] border-b-2 transition-all whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace;border-color:var(--accent-v0)" data-qtab="ts" data-i18n="Time Series Analysis">Time Series Analysis</button>
-                <button class="q-inner-tab px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] th-text-m border-b-2 border-transparent transition-all whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace" data-qtab="roe" data-i18n="PBR Analysis (Q)">PBR Analysis (Q)</button>
                 <button class="q-inner-tab px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] th-text-m border-b-2 border-transparent transition-all whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace" data-qtab="fs" data-i18n="Financial Statements">Financial Statements</button>
+                <button class="q-inner-tab px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] th-text-m border-b-2 border-transparent transition-all whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace" data-qtab="roe" data-i18n="PBR Analysis (Q)">PBR Analysis (Q)</button>
               </nav>
             </div>
 
@@ -893,11 +893,6 @@
               </div>
             </div>
 
-            <!-- Q sub-tab: ROE分解 -->
-            <div id="qtab-roe" class="q-inner-content hidden">
-              <div id="qRoeTree"></div>
-            </div>
-
             <!-- Q sub-tab: 財務諸表 -->
             <div id="qtab-fs" class="q-inner-content hidden">
               <!-- PL sub-section -->
@@ -915,6 +910,11 @@
                 <h3 class="v0-section-label mb-4" data-i18n="Cash Flow Statement">Cash Flow Statement</h3>
                 <div id="qFsCfTable" class="overflow-x-auto"></div>
               </div>
+            </div>
+
+            <!-- Q sub-tab: PBR分析 -->
+            <div id="qtab-roe" class="q-inner-content hidden">
+              <div id="qRoeTree"></div>
             </div>
           </div>
         </div><!-- /subtab-quarterly -->
@@ -941,6 +941,19 @@
     const metaForm = $('metaForm'), fileName = $('fileName');
     let selectedFile = null, charts = {}, lastTimeseries = null, lastData = null, lastBenchmark = null;
     let selectedInvestorProfile = 'balanced';
+
+    // Universal no-data placeholder: hides canvas, inserts dashed N/A box
+    function showNoData(el) {
+      if (!el) return;
+      el.style.display = 'none';
+      const wrap = el.parentElement;
+      if (!wrap || wrap.querySelector('.chart-nodata')) return;
+      const div = document.createElement('div');
+      div.className = 'chart-nodata flex items-center justify-center';
+      div.style.cssText = 'min-height:72px;border:1.5px dashed var(--border-s,#374151);border-radius:0;';
+      div.innerHTML = '<span style="font-family:\'IBM Plex Mono\',\'Courier New\',monospace;font-size:11px;color:#6b7280;letter-spacing:0.12em">N/A</span>';
+      wrap.appendChild(div);
+    }
 
     const PROFILE_DESC = {
       balanced: {
@@ -1359,6 +1372,8 @@
       'ROE Contribution':     { ja: 'ROE貢献', en: 'ROE Contribution' },
       'Interaction Term':     { ja: '交差項', en: 'Interaction Term' },
       '1Y ago':               { ja: '1年前', en: '1Y ago' },
+      '1Y Change:':           { ja: '直近変化:', en: '1Y Change:' },
+      '四半期間の各要因がPBRに与えた影響を分解': { ja: '四半期間の各要因がPBRに与えた影響を分解', en: 'Decomposition of each factor\'s impact on PBR over the period' },
       'Latest (Q)':           { ja: '四半期 (最新)', en: 'Latest (Q)' },
       'Operating CF':         { ja: '営業CF', en: 'Operating CF' },
       'Investing CF':         { ja: '投資CF', en: 'Investing CF' },
@@ -2497,7 +2512,7 @@
           <!-- ROE (Profitability) -->
           <div class="p-6 th-bg-2 border" style="border-color:var(--border-s);border-radius:0">
             <div class="flex items-center gap-2 mb-2">
-              <div class="w-3 h-3 bg-green-500" style="border-radius:0"></div>
+              <div class="w-3 h-3 bg-brand" style="border-radius:0"></div>
               <span class="text-[10px] font-bold uppercase tracking-[0.18em] th-text-m" style="font-family:'IBM Plex Mono','Courier New',monospace">${t('Profitability (ROE)')}</span>
             </div>
             <div class="flex items-baseline gap-2 mb-1">
@@ -2528,7 +2543,7 @@
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           <div class="p-5 th-bg-2 border" style="border-color:var(--border-s);border-radius:0">
-            <div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 bg-blue-500" style="border-radius:0"></div><span class="text-[10px] font-bold uppercase tracking-[0.18em] th-text-m" style="font-family:'IBM Plex Mono','Courier New',monospace">${t('Net Profit Margin')}</span></div>
+            <div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 bg-brand" style="border-radius:0"></div><span class="text-[10px] font-bold uppercase tracking-[0.18em] th-text-m" style="font-family:'IBM Plex Mono','Courier New',monospace">${t('Net Profit Margin')}</span></div>
             <p class="text-2xl font-bold tabular-nums mb-1" style="font-family:'IBM Plex Mono','Courier New',monospace">${fmtNum(npm['現在値'],1)}<span class="text-sm th-text-m">%</span></p>
             <p class="text-[10px] th-text-m mb-1">${t('Net Margin')} = ${t('Net Income')} / ${t('Revenue')}</p>
             ${benchBadge('net_margin', 100, '%')}
@@ -2565,7 +2580,7 @@
             </div>
           </div>
           <div class="p-5 th-bg-2 border" style="border-color:var(--border-s);border-radius:0">
-            <div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 bg-amber-500" style="border-radius:0"></div><span class="text-[10px] font-bold uppercase tracking-[0.18em] th-text-m" style="font-family:'IBM Plex Mono','Courier New',monospace">${t('Financial Leverage')}</span></div>
+            <div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 bg-brand" style="border-radius:0"></div><span class="text-[10px] font-bold uppercase tracking-[0.18em] th-text-m" style="font-family:'IBM Plex Mono','Courier New',monospace">${t('Financial Leverage')}</span></div>
             <p class="text-2xl font-bold tabular-nums mb-1" style="font-family:'IBM Plex Mono','Courier New',monospace">${fmtNum(em['現在値'],2)}<span class="text-sm th-text-m">x</span></p>
             <p class="text-[10px] th-text-m mb-1">${t('Leverage')} = ${t('Total Assets')} / ${t('Equity')}</p>
             <p class="text-[11px] th-text-m mb-3">${t('5Y Change:')} ${fmtNum(em['5年変化'],2)}</p>
@@ -2643,7 +2658,7 @@
           }
           const { labels: perL, values: perV } = filterNulls(allDates, perArr);
           if (perL.length === 0) {
-            perChartContainer.innerHTML = `<div class="flex items-center justify-center gap-2 p-3 border border-yellow-500/20 bg-yellow-500/5" style="border-radius:0"><span class="text-yellow-400">⚠</span><p class="text-[10px] th-text-m">${t('時系列データなし')}</p></div>`;
+            showNoData(perCanvas);
           } else {
             const note = dataNote(allDates.length, perL.length);
             if (note && perChartContainer) perChartContainer.insertAdjacentHTML('beforeend', `<p class="text-[9px] th-text-m mt-1 text-right">${note}</p>`);
@@ -2651,8 +2666,8 @@
               labels: perL, datasets: [{ data: perV, backgroundColor: '#D4852ACC', borderColor: 'transparent', borderWidth: 0, borderRadius: 0 }]
             }});
           }
-        } else if (perChartContainer) {
-          perChartContainer.innerHTML = `<div class="flex items-center justify-center gap-2 p-3 border border-yellow-500/20 bg-yellow-500/5" style="border-radius:0"><span class="text-yellow-400">⚠</span><p class="text-[10px] th-text-m">${t('時系列データなし')}</p></div>`;
+        } else if (perCanvas) {
+          showNoData(perCanvas);
         }
 
         // ROE chart
@@ -2667,7 +2682,7 @@
         if (roeCanvas && ts.roe && ts.roe.length > 0) {
           const { labels: roeL, values: roeV } = filterNulls(allDates, ts.roe.slice().reverse());
           if (roeL.length === 0) {
-            roeChartContainer.innerHTML = `<div class="flex items-center justify-center gap-2 p-3 border border-yellow-500/20 bg-yellow-500/5" style="border-radius:0"><span class="text-yellow-400">⚠</span><p class="text-[10px] th-text-m">${t('時系列データなし')}</p></div>`;
+            showNoData(roeCanvas);
           } else {
             const note = dataNote(allDates.length, roeL.length);
             if (note && roeChartContainer) roeChartContainer.insertAdjacentHTML('beforeend', `<p class="text-[9px] th-text-m mt-1 text-right">${note}</p>`);
@@ -2675,8 +2690,8 @@
               labels: roeL, datasets: [{ data: roeV, backgroundColor: '#D4852ACC', borderColor: 'transparent', borderWidth: 0, borderRadius: 0 }]
             }});
           }
-        } else if (roeChartContainer) {
-          roeChartContainer.innerHTML = `<div class="flex items-center justify-center gap-2 p-3 border border-yellow-500/20 bg-yellow-500/5" style="border-radius:0"><span class="text-yellow-400">⚠</span><p class="text-[10px] th-text-m">${t('時系列データなし')}</p></div>`;
+        } else if (roeCanvas) {
+          showNoData(roeCanvas);
         }
 
         // DuPont decomposition charts
@@ -2688,18 +2703,13 @@
         dupontCharts.forEach(({ id, key, color }) => {
           const canvas = document.getElementById(id);
           if (!canvas) return;
-          if (ts[key] && ts[key].length > 0) {
-            const { labels: dl, values: dv } = filterNulls(allDates, ts[key].slice().reverse());
-            if (dl.length === 0) {
-              canvas.parentElement.innerHTML = `<div class="flex items-center justify-center gap-2 p-3 border border-yellow-500/20 bg-yellow-500/5" style="border-radius:0"><span class="text-yellow-400">⚠</span><p class="text-[10px] th-text-m">${t('時系列データなし')}</p></div>`;
-            } else {
-              new Chart(canvas, { ...miniOpts(color, metricFmt(key)), data: {
-                labels: dl, datasets: [{ data: dv, backgroundColor: color + 'CC', borderColor: 'transparent', borderWidth: 0, borderRadius: 0 }]
-              }});
-            }
-          } else {
-            canvas.parentElement.innerHTML = `<div class="flex items-center justify-center gap-2 p-3 border border-yellow-500/20 bg-yellow-500/5" style="border-radius:0"><span class="text-yellow-400">⚠</span><p class="text-[10px] th-text-m">${t('時系列データなし')}</p></div>`;
-          }
+          const hasData = ts[key] && ts[key].some(v => v != null);
+          if (!hasData) { showNoData(canvas); return; }
+          const { labels: dl, values: dv } = filterNulls(allDates, ts[key].slice().reverse());
+          if (dl.length === 0) { showNoData(canvas); return; }
+          new Chart(canvas, { ...miniOpts(color, metricFmt(key)), data: {
+            labels: dl, datasets: [{ data: dv, backgroundColor: color + 'CC', borderColor: 'transparent', borderWidth: 0, borderRadius: 0 }]
+          }});
         });
       });
     }
@@ -3110,7 +3120,7 @@
       if (noDataEl) noDataEl.classList.add('hidden');
       if (contentEl) contentEl.classList.remove('hidden');
 
-      const dates = q.dates.slice(0, 8).reverse().map(d => d.slice(0, 7));
+      let dates = q.dates.slice(0, 8).reverse().map(d => d.slice(0, 7));
       const rev = arr => Array.isArray(arr) ? arr.slice(0, 8).reverse() : [];
       const cs = getComputedStyle(document.documentElement);
       const chartText = cs.getPropertyValue('--chart-text').trim();
@@ -3134,16 +3144,7 @@
       function qBarColors(data, posColor) {
         return (data || []).map(v => (v != null && v < 0) ? '#ef444499' : posColor + 'CC');
       }
-      function qShowNoData(el) {
-        el.style.display = 'none';
-        const wrap = el.parentElement;
-        if (wrap && !wrap.querySelector('.q-nodata')) {
-          const p = document.createElement('p');
-          p.className = 'q-nodata text-sm th-text-m text-center py-6 tabular-nums';
-          p.textContent = '—';
-          wrap.appendChild(p);
-        }
-      }
+      function qShowNoData(el) { showNoData(el); }
       function qCreateChart(id, label, data, color) {
         const el = $(id); if (!el) return;
         const hasData = Array.isArray(data) && data.some(v => v != null && v !== 0);
@@ -3164,22 +3165,26 @@
       }
 
       const inc = q.income || {}, bal = q.balance || {}, cf = q.cashflow || {};
-      const nullify = arr => (arr || []).map(v => (v == null || (v === 0 && arr.every(x => x == null || x === 0))) ? null : v);
-      qCreateChart('chartQRevenue',     t('Revenue'),          rev(inc['Total Revenue']),      '#D4852A');
-      qCreateChart('chartQNetIncome',   t('Net Income'),       rev(inc['Net Income']),         '#D4852A');
-      qCreateChart('chartQOpIncome',    t('Operating Income'), rev(inc['Operating Income']),   '#D4852A');
-      qCreateChart('chartQEBITDA',      'EBITDA',              rev(inc['EBITDA']),             '#D4852A');
-      qCreateChart('chartQEPS',         'EPS (Diluted)',        rev(inc['Diluted EPS']),        '#D4852A');
-      qCreateChart('chartQGrossProfit', t('Gross Profit'),     rev(inc['Gross Profit']),       '#D4852A');
+      // Remove leading/trailing date positions where all series have no data
+      const _vSeries = [inc['Total Revenue'], inc['Net Income'], inc['Operating Income'], inc['EBITDA'], inc['Diluted EPS'], inc['Gross Profit'], bal['Total Assets'], cf['Operating Cash Flow']];
+      const _validMask = dates.map((_, i) => _vSeries.some(a => { const r = rev(a); return r[i] != null; }));
+      dates = dates.filter((_, i) => _validMask[i]);
+      const vf = arr => arr.filter((_, i) => _validMask[i]);
+      qCreateChart('chartQRevenue',     t('Revenue'),          vf(rev(inc['Total Revenue'])),      '#D4852A');
+      qCreateChart('chartQNetIncome',   t('Net Income'),       vf(rev(inc['Net Income'])),         '#D4852A');
+      qCreateChart('chartQOpIncome',    t('Operating Income'), vf(rev(inc['Operating Income'])),   '#D4852A');
+      qCreateChart('chartQEBITDA',      'EBITDA',              vf(rev(inc['EBITDA'])),             '#D4852A');
+      qCreateChart('chartQEPS',         'EPS (Diluted)',        vf(rev(inc['Diluted EPS'])),        '#D4852A');
+      qCreateChart('chartQGrossProfit', t('Gross Profit'),     vf(rev(inc['Gross Profit'])),       '#D4852A');
       qMultiChart('chartQBS', [
-        { label: t('Total Assets'), data: rev(bal['Total Assets']),        borderColor: '#D4852A' },
-        { label: t('Equity'),       data: rev(bal['Stockholders Equity']), borderColor: '#22c55e' },
-        { label: t('Debt'),         data: rev(bal['Total Debt']),          borderColor: '#ef4444' },
+        { label: t('Total Assets'), data: vf(rev(bal['Total Assets'])),        borderColor: '#D4852A' },
+        { label: t('Equity'),       data: vf(rev(bal['Stockholders Equity'])), borderColor: '#22c55e' },
+        { label: t('Debt'),         data: vf(rev(bal['Total Debt'])),          borderColor: '#ef4444' },
       ]);
       qMultiChart('chartQCF', [
-        { label: t('Operating CF'), data: rev(cf['Operating Cash Flow']), borderColor: '#D4852A' },
-        { label: 'FCF',             data: rev(cf['Free Cash Flow']),      borderColor: '#22c55e' },
-        { label: 'CapEx',           data: rev(cf['Capital Expenditure']), borderColor: '#ef4444' },
+        { label: t('Operating CF'), data: vf(rev(cf['Operating Cash Flow'])), borderColor: '#D4852A' },
+        { label: 'FCF',             data: vf(rev(cf['Free Cash Flow'])),      borderColor: '#22c55e' },
+        { label: 'CapEx',           data: vf(rev(cf['Capital Expenditure'])), borderColor: '#ef4444' },
       ]);
 
       renderQPBRAnalysis(q);
@@ -3211,6 +3216,12 @@
       const qNPM = ni.map((v, i) => v != null && rev_[i] ? v / rev_[i] * 100 : null);
       const qAT  = rev_.map((v, i) => v != null && ta[i] ? v / ta[i] : null);
       const qLev = ta.map((v, i) => v != null && eq[i] && eq[i] !== 0 ? v / eq[i] : null);
+
+      // DuPont: filter to only quarters where all base data (ni, eq, rev_, ta) is non-null
+      // This unifies the date range so all 4 DuPont charts show identical x-axis
+      const dupontMask = dates.map((_, i) => ni[i] != null && eq[i] != null && rev_[i] != null && ta[i] != null);
+      const dupontDates = dates.filter((_, i) => dupontMask[i]);
+      const dmf = arr => arr.filter((_, i) => dupontMask[i]);
 
       // BPS = Equity / Shares (for quarterly PBR trend)
       const qBPS = eq.map((v, i) => shares[i] && shares[i] > 0 ? v / shares[i] : null);
@@ -3254,12 +3265,15 @@
       const chartText = cs.getPropertyValue('--chart-text').trim();
       const chartGridY = cs.getPropertyValue('--chart-grid-y').trim();
 
-      function qMiniChart(canvasId, data, color, fmtCb) {
+      function qMiniChart(canvasId, data, color, fmtCb, customDates) {
         const cvs = document.getElementById(canvasId); if (!cvs) return;
+        const hasData = Array.isArray(data) && data.some(v => v != null);
+        if (!hasData) { showNoData(cvs); return; }
+        const lbls = customDates || dates;
         const barColors = data.map(v => v != null && v < 0 ? '#ef444499' : color + 'CC');
         qRoeCharts[canvasId] = new Chart(cvs, {
           type: 'bar',
-          data: { labels: dates, datasets: [{ data, backgroundColor: barColors, borderColor: 'transparent', borderWidth: 0, borderRadius: 0 }] },
+          data: { labels: lbls, datasets: [{ data, backgroundColor: barColors, borderColor: 'transparent', borderWidth: 0, borderRadius: 0 }] },
           options: {
             responsive: true, maintainAspectRatio: true,
             plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => fmtCb(ctx.parsed.y) } } },
@@ -3306,65 +3320,6 @@
           <p class="text-[11px] text-yellow-300">${t('ROE-negative-warning')}</p>
         </div>` : '<div class="mb-4"></div>'}
 
-        <!-- PBR Contribution Analysis (1Y waterfall) -->
-        ${(()=>{
-          const valid = qPBR.filter(v => v != null);
-          if (valid.length < 2) return '';
-          const pbr0 = valid[0];       // oldest in range
-          const pbrN = valid[valid.length - 1]; // newest
-          const roe0 = qROE[0] != null ? qROE[0] / 100 : null;
-          const roeN = qROE[qROE.length - 1] != null ? qROE[qROE.length - 1] / 100 : null;
-          const per0 = qPER[0];
-          const perN = qPER[qPER.length - 1];
-          if (pbr0 == null || pbrN == null) return '';
-          const dPBR = pbrN - pbr0;
-          const dPER = (perN != null && per0 != null) ? perN - per0 : null;
-          const dROE = (roeN != null && roe0 != null) ? (roeN - roe0) * 100 : null;
-          // Contribution: ΔPBR = ROE_avg × ΔPER + PER_avg × ΔROE_dec + interaction
-          const roeAvg = (roe0 != null && roeN != null) ? (roe0 + roeN) / 2 : null;
-          const perAvg = (per0 != null && perN != null) ? (per0 + perN) / 2 : null;
-          const perContrib = (roeAvg != null && dPER != null) ? roeAvg * dPER : null;
-          const roeContrib = (perAvg != null && dROE != null) ? perAvg * (dROE / 100) : null;
-          const interaction = (perContrib != null && roeContrib != null) ? dPBR - perContrib - roeContrib : null;
-          const sign = v => v > 0 ? '+' : '';
-          const bar = (v, total) => {
-            if (v == null || total === 0) return '';
-            const pct = Math.min(Math.abs(v / total) * 100, 100).toFixed(1);
-            const clr = v > 0 ? '#22c55e' : '#ef4444';
-            return \`<div style="width:\${pct}%;height:6px;background:\${clr};border-radius:0;display:inline-block"></div>\`;
-          };
-          const totalAbs = Math.abs(dPBR) || 1;
-          return \`
-          <div class="mb-8 p-5 th-bg-2 border" style="border-color:var(--border-s);border-radius:0">
-            <p class="v0-section-label mb-4">\${t('PBR Contribution')}</p>
-            <div class="space-y-3 text-[11px]">
-              <div class="flex items-center justify-between">
-                <span class="th-text-m w-32">\${t('1Y ago')} PBR</span>
-                <span class="font-bold tabular-nums" style="font-family:'IBM Plex Mono',monospace">\${fmtNum(pbr0,2)}x</span>
-              </div>
-              \${perContrib != null ? \`<div class="flex items-center gap-3">
-                <span class="th-text-m w-32">\${t('PER Contribution')}</span>
-                <div class="flex-1">\${bar(perContrib, totalAbs)}</div>
-                <span class="font-bold tabular-nums w-16 text-right" style="font-family:'IBM Plex Mono',monospace;color:\${perContrib>=0?'#22c55e':'#ef4444'}">\${sign(perContrib)}\${fmtNum(perContrib,3)}x</span>
-              </div>\` : ''}
-              \${roeContrib != null ? \`<div class="flex items-center gap-3">
-                <span class="th-text-m w-32">\${t('ROE Contribution')}</span>
-                <div class="flex-1">\${bar(roeContrib, totalAbs)}</div>
-                <span class="font-bold tabular-nums w-16 text-right" style="font-family:'IBM Plex Mono',monospace;color:\${roeContrib>=0?'#22c55e':'#ef4444'}">\${sign(roeContrib)}\${fmtNum(roeContrib,3)}x</span>
-              </div>\` : ''}
-              \${interaction != null && Math.abs(interaction) > 0.001 ? \`<div class="flex items-center gap-3">
-                <span class="th-text-m w-32">\${t('Interaction Term')}</span>
-                <div class="flex-1">\${bar(interaction, totalAbs)}</div>
-                <span class="font-bold tabular-nums w-16 text-right" style="font-family:'IBM Plex Mono',monospace;color:\${interaction>=0?'#22c55e':'#ef4444'}">\${sign(interaction)}\${fmtNum(interaction,3)}x</span>
-              </div>\` : ''}
-              <div class="flex items-center justify-between border-t pt-3" style="border-color:var(--border-m)">
-                <span class="font-bold th-text-s w-32">Current PBR</span>
-                <span class="font-bold tabular-nums" style="font-family:'IBM Plex Mono',monospace;color:var(--accent-v0)">\${fmtNum(pbrN,2)}x (<span style="color:\${dPBR>=0?'#22c55e':'#ef4444'}">\${sign(dPBR)}\${fmtNum(dPBR,3)}x</span>)</span>
-              </div>
-            </div>
-          </div>\`;
-        })()}
-
         <!-- PER + ROE side-by-side (mirrors annual) -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
           <div class="p-6 th-bg-2 border" style="border-color:var(--border-s);border-radius:0">
@@ -3381,7 +3336,7 @@
           </div>
           <div class="p-6 th-bg-2 border" style="border-color:var(--border-s);border-radius:0">
             <div class="flex items-center gap-2 mb-2">
-              <div class="w-3 h-3 bg-green-500" style="border-radius:0"></div>
+              <div class="w-3 h-3 bg-brand" style="border-radius:0"></div>
               <span class="text-[10px] font-bold uppercase tracking-[0.18em] th-text-m" style="font-family:'IBM Plex Mono','Courier New',monospace">${t('Profitability (ROE)')}</span>
             </div>
             <div class="flex items-baseline gap-2 mb-1">
@@ -3407,7 +3362,7 @@
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           <div class="p-5 th-bg-2 border" style="border-color:var(--border-s);border-radius:0">
-            <div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 bg-blue-500" style="border-radius:0"></div><span class="text-[10px] font-bold uppercase tracking-[0.18em] th-text-m" style="font-family:'IBM Plex Mono','Courier New',monospace">${t('Net Profit Margin')}</span></div>
+            <div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 bg-brand" style="border-radius:0"></div><span class="text-[10px] font-bold uppercase tracking-[0.18em] th-text-m" style="font-family:'IBM Plex Mono','Courier New',monospace">${t('Net Profit Margin')}</span></div>
             <p class="text-2xl font-bold tabular-nums mb-1" style="font-family:'IBM Plex Mono','Courier New',monospace">${latestNPM!=null?fmtNum(latestNPM,1):'—'}<span class="text-sm th-text-m">%</span></p>
             <p class="text-[10px] th-text-m mb-3">${t('Net Margin')} = ${t('Net Income')} / ${t('Revenue')}</p>
             <canvas id="qDupontNPMChart" style="max-height:120px"></canvas>
@@ -3419,20 +3374,116 @@
             <canvas id="qDupontATChart" style="max-height:120px"></canvas>
           </div>
           <div class="p-5 th-bg-2 border" style="border-color:var(--border-s);border-radius:0">
-            <div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 bg-amber-500" style="border-radius:0"></div><span class="text-[10px] font-bold uppercase tracking-[0.18em] th-text-m" style="font-family:'IBM Plex Mono','Courier New',monospace">${t('Financial Leverage')}</span></div>
+            <div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 bg-brand" style="border-radius:0"></div><span class="text-[10px] font-bold uppercase tracking-[0.18em] th-text-m" style="font-family:'IBM Plex Mono','Courier New',monospace">${t('Financial Leverage')}</span></div>
             <p class="text-2xl font-bold tabular-nums mb-1" style="font-family:'IBM Plex Mono','Courier New',monospace">${latestLev!=null?fmtNum(latestLev,2):'—'}<span class="text-sm th-text-m">x</span></p>
             <p class="text-[10px] th-text-m mb-3">${t('Leverage')} = ${t('Total Assets')} / ${t('Equity')}</p>
             <canvas id="qDupontLEVChart" style="max-height:120px"></canvas>
           </div>
         </div>
+
+        <!-- PBR Contribution Analysis (ranking) — PBR分析タブ最下部 -->
+        ${(()=>{
+          const naBox = `<div class="mt-12 pt-8 border-t p-5 th-bg-2" style="border-color:var(--border);border-top:1px solid var(--border);border-left:none;border-right:none;border-bottom:none"><p class="v0-section-label mb-3">${t('PBR Driver Analysis')}</p><div class="flex items-center justify-center" style="min-height:56px"><span style="font-family:'IBM Plex Mono','Courier New',monospace;font-size:11px;color:#6b7280;letter-spacing:0.12em">N/A</span></div></div>`;
+          const fullMask = dates.map((_, i) => qPBR[i] != null && qPER[i] != null && qROE[i] != null && qNPM[i] != null && qAT[i] != null && qLev[i] != null);
+          const fullIdx = fullMask.map((v, i) => v ? i : null).filter(i => i !== null);
+          if (fullIdx.length < 2) return naBox;
+          const i0 = fullIdx[0], iN = fullIdx[fullIdx.length - 1];
+          const per0 = qPER[i0], perN = qPER[iN];
+          const npm0 = qNPM[i0] / 100, npmN = qNPM[iN] / 100;
+          const at0 = qAT[i0], atN = qAT[iN];
+          const lev0 = qLev[i0], levN = qLev[iN];
+          const pbr0 = qPBR[i0], pbrN = qPBR[iN];
+          const dPBR = pbrN - pbr0;
+          const perAvg = (per0 + perN) / 2;
+          const npmAvg = (npm0 + npmN) / 2;
+          const atAvg  = (at0  + atN)  / 2;
+          const levAvg = (lev0 + levN) / 2;
+          const roeAvg = (npm0 * at0 * lev0 + npmN * atN * levN) / 2;
+          const perContrib = (perN - per0) * roeAvg;
+          const npmContrib = perAvg * (npmN - npm0) * atAvg * levAvg;
+          const atContrib  = perAvg * npmAvg * (atN - at0) * levAvg;
+          const levContrib = perAvg * npmAvg * atAvg * (levN - lev0);
+          const npmROEpt = (npmN - npm0) * 100 * atAvg * levAvg;
+          const atROEpt  = npmAvg * 100 * (atN - at0) * levAvg;
+          const levROEpt = npmAvg * 100 * atAvg * (levN - lev0);
+          const factors = [
+            { '指標': 'PER',          'カテゴリ': 'PER要因', 'PBR寄与度': perContrib, 'ROE寄与度pt': null },
+            { '指標': '純利益率',     'カテゴリ': 'ROE要因', 'PBR寄与度': npmContrib, 'ROE寄与度pt': npmROEpt },
+            { '指標': '総資産回転率', 'カテゴリ': 'ROE要因', 'PBR寄与度': atContrib,  'ROE寄与度pt': atROEpt },
+            { '指標': '財務レバレッジ','カテゴリ': 'ROE要因', 'PBR寄与度': levContrib, 'ROE寄与度pt': levROEpt },
+          ];
+          const upItems   = factors.filter(f => f['PBR寄与度'] > 0).sort((a,b) => b['PBR寄与度']-a['PBR寄与度']).map((f,i) => ({...f,'順位':i+1}));
+          const downItems = factors.filter(f => f['PBR寄与度'] <= 0).sort((a,b) => a['PBR寄与度']-b['PBR寄与度']).map((f,i) => ({...f,'順位':i+1}));
+          const maxAbs = Math.max(...[...upItems,...downItems].map(it => Math.abs(it['PBR寄与度'])), 0.001);
+          const buildQRow = (item, isUp) => {
+            const pbrImpact  = item['PBR寄与度'];
+            const rc         = item['ROE寄与度pt'];
+            const barWidth   = Math.min(Math.abs(pbrImpact) / maxAbs * 100, 100);
+            const color      = isUp ? '#4ade80' : '#f87171';
+            const bgColor    = isUp ? 'bg-green-500/5 border-green-500/10' : 'bg-red-500/5 border-red-500/10';
+            const badgeColor = isUp ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400';
+            const textColor  = isUp ? 'text-green-400' : 'text-red-400';
+            const arrow      = isUp ? '&#9650;' : '&#9660;';
+            const catLabel   = item['カテゴリ'] === 'ROE要因' ? 'ROE' : 'PER';
+            const catColor   = item['カテゴリ'] === 'ROE要因' ? 'bg-blue-500/20 text-blue-400' : 'bg-brand/20 text-brand';
+            const roeText    = rc !== null ? `<p class="text-[10px] th-text-m tabular-nums">ROE ${rc>0?'+':''}${fmtNum(rc,2)}pt</p>` : '';
+            return `<div class="flex items-center gap-4 p-4 border ${bgColor} transition-all hover:scale-[1.01]" style="border-radius:0">
+              <span class="w-8 h-8 flex items-center justify-center text-xs font-bold ${badgeColor}" style="border-radius:0;font-family:'IBM Plex Mono','Courier New',monospace">${item['順位']}</span>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-xs font-semibold th-text">${t(item['指標'])}</span>
+                  <span class="text-[9px] px-1.5 py-0.5 ${catColor} font-bold tracking-wider" style="border-radius:0">${catLabel}</span>
+                </div>
+                <div class="w-full h-1.5 th-bg-3 overflow-hidden" style="border-radius:0">
+                  <div class="h-full transition-all" style="width:${barWidth}%;background:${color};border-radius:0"></div>
+                </div>
+              </div>
+              <div class="text-right shrink-0 min-w-[120px]">
+                <p class="text-xs font-bold tabular-nums ${textColor}" style="font-family:'IBM Plex Mono','Courier New',monospace">${arrow} PBR ${pbrImpact>0?'+':''}${fmtNum(pbrImpact,3)}x</p>
+                ${roeText}
+              </div>
+            </div>`;
+          };
+          const upRows   = upItems.map(it => buildQRow(it,true)).join('');
+          const downRows = downItems.map(it => buildQRow(it,false)).join('');
+          const pbrChgText = `PBR ${t('1Y Change:')} ${dPBR>0?'+':''}${fmtNum(dPBR,3)}x`;
+          return `
+          <div class="mt-12 pt-8 border-t" style="border-color:var(--border)">
+            <div class="text-center mb-6">
+              <p class="v0-section-label mb-2">${t('PBR Driver Analysis')}</p>
+              <p class="text-lg font-bold th-text mb-1">${pbrChgText}</p>
+              <p class="text-xs th-text-m">${dates[i0]||''} → ${dates[iN]||''} — ${t('四半期間の各要因がPBRに与えた影響を分解')}</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+              <div>
+                <div class="flex items-center gap-2 mb-4">
+                  <span class="text-green-400 text-lg">&#9650;</span>
+                  <span class="text-sm font-bold th-text">${t('PBR上昇要因')}</span>
+                </div>
+                <div class="space-y-3">${upRows||'<p class="text-xs th-text-d text-center py-4">—</p>'}</div>
+              </div>
+              <div>
+                <div class="flex items-center gap-2 mb-4">
+                  <span class="text-red-400 text-lg">&#9660;</span>
+                  <span class="text-sm font-bold th-text">${t('PBR下落要因')}</span>
+                </div>
+                <div class="space-y-3">${downRows||'<p class="text-xs th-text-d text-center py-4">—</p>'}</div>
+              </div>
+            </div>
+          </div>`;
+        })()}
       `;
 
       requestAnimationFrame(() => {
-        qMiniChart('qPBRPERChart',   qPER.length ? qPER : (perVal ? [perVal] : []), '#D4852A', v => fmtNum(v,1)+'x');
-        qMiniChart('qPBRROEChart',   qROE,  '#22c55e', v => fmtNum(v,1)+'%');
-        qMiniChart('qDupontNPMChart', qNPM, '#3b82f6', v => fmtNum(v,2)+'%');
-        qMiniChart('qDupontATChart',  qAT,  '#D4852A', v => fmtNum(v,3)+'x');
-        qMiniChart('qDupontLEVChart', qLev, '#f59e0b', v => fmtNum(v,2)+'x');
+        // PER: filter to dupontMask ∩ qPER non-null → no holes in bar chart
+        const perCompMask = dates.map((_, i) => dupontMask[i] && qPER[i] != null);
+        const perCompDates = dates.filter((_, i) => perCompMask[i]);
+        const perFiltered = qPER.filter((_, i) => perCompMask[i]);
+        qMiniChart('qPBRPERChart', perFiltered.length ? perFiltered : (perVal ? [perVal] : []), '#D4852A', v => fmtNum(v,1)+'x', perFiltered.length ? perCompDates : null);
+        qMiniChart('qPBRROEChart',    dmf(qROE), '#D4852A', v => fmtNum(v,1)+'%',  dupontDates);
+        qMiniChart('qDupontNPMChart', dmf(qNPM), '#D4852A', v => fmtNum(v,2)+'%',  dupontDates);
+        qMiniChart('qDupontATChart',  dmf(qAT),  '#D4852A', v => fmtNum(v,3)+'x',  dupontDates);
+        qMiniChart('qDupontLEVChart', dmf(qLev), '#D4852A', v => fmtNum(v,2)+'x',  dupontDates);
       });
     }
 
@@ -3547,18 +3598,24 @@
         return (data || []).map(v => (v != null && v < 0) ? '#ef444499' : posColor + 'CC');
       }
       function createChart(id, label, data, color) {
+        const el = $(id); if (!el) return;
+        const hasData = Array.isArray(data) && data.some(v => v != null);
+        if (!hasData) { showNoData(el); return; }
         const dataset = chartType === 'bar'
           ? { label, data, backgroundColor: barColors(data, color), borderColor: 'transparent', borderWidth: 0, borderRadius: 0 }
           : { label, data, borderColor: color, backgroundColor: color + '18', fill: true, borderWidth: 2, pointRadius: 2, tension: 0 };
-        charts[id] = new Chart($(id), { type: chartType, plugins: [makeZeroPlugin()], data: { labels: dates, datasets: [dataset] }, options: opts });
+        charts[id] = new Chart(el, { type: chartType, plugins: [makeZeroPlugin()], data: { labels: dates, datasets: [dataset] }, options: opts });
       }
       function multiChart(id, datasets, useOpts) {
+        const el = $(id); if (!el) return;
+        const hasData = datasets.some(d => Array.isArray(d.data) && d.data.some(v => v != null));
+        if (!hasData) { showNoData(el); return; }
         const newDatasets = datasets.map(ds =>
           chartType === 'bar'
             ? { ...ds, backgroundColor: barColors(ds.data, ds.borderColor.slice(0,7)), borderColor: 'transparent', fill: false, borderWidth: 0, borderDash: undefined, pointRadius: 0, tension: undefined }
             : ds
         );
-        charts[id] = new Chart($(id), { type: chartType, plugins: [makeZeroPlugin()], data: { labels: dates, datasets: newDatasets }, options: useOpts || opts });
+        charts[id] = new Chart(el, { type: chartType, plugins: [makeZeroPlugin()], data: { labels: dates, datasets: newDatasets }, options: useOpts || opts });
       }
 
       createChart('chartRevenue', t('Revenue'), tsR.revenue, '#D4852A');

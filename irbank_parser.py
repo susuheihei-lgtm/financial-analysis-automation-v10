@@ -29,48 +29,50 @@ _CACHE_TTL: float = 86400.0  # 24時間
 _FILE_ALL = "fy-data-all.csv"
 _BASE_URL = "https://f.irbank.net/files/{code}/" + _FILE_ALL
 
+# 四半期データCSV
+_FILE_Q = "q-data.csv"
+_BASE_URL_Q = "https://f.irbank.net/files/{code}/" + _FILE_Q
+
 _dl_lock = threading.Lock()
 
 # ── ダウンロード & キャッシュ ─────────────────────────────────────────────────
 
-def _download_company_csv(code: str) -> bytes | None:
-    """IR BANK から銘柄個別の全データCSVを取得（ローカルキャッシュ有効活用）"""
+def _download_csv(code: str, filename: str, base_url: str) -> bytes | None:
+    """IR BANK から指定ファイルを取得（ローカルキャッシュ有効活用）"""
     if _requests is None:
-        logger.warning("IR BANK: requests がインストールされていないためスキップ")
         return None
-
-    cache_path = _IRBANK_DIR / code / _FILE_ALL
+    cache_path = _IRBANK_DIR / code / filename
     cache_path.parent.mkdir(parents=True, exist_ok=True)
-
-    # キャッシュが有効なら使う
     if cache_path.exists() and (time.time() - cache_path.stat().st_mtime) < _CACHE_TTL:
         return cache_path.read_bytes()
-
     with _dl_lock:
-        # ロック後に再確認
         if cache_path.exists() and (time.time() - cache_path.stat().st_mtime) < _CACHE_TTL:
             return cache_path.read_bytes()
-
-        url = _BASE_URL.format(code=code)
+        url = base_url.format(code=code)
         logger.info("IR BANK ダウンロード中: %s", url)
         try:
             resp = _requests.get(
-                url,
-                timeout=30,
-                allow_redirects=True,
+                url, timeout=30, allow_redirects=True,
                 headers={"User-Agent": "FinancialAnalysisApp admin@example.com"},
             )
             resp.raise_for_status()
-            # レート制限ページのチェック（302 or HTML errorページ）
             if b'\xe8\xa1\xa8\xe7\xa4\xba\xe5\x88\xb6\xe9\x99\x90' in resp.content:
-                logger.warning("IR BANK: レート制限中（高負荷）- %s", code)
+                logger.warning("IR BANK: レート制限中 - %s", code)
                 return None
             cache_path.write_bytes(resp.content)
             logger.info("IR BANK キャッシュ保存: %s (%d bytes)", cache_path, len(resp.content))
             return resp.content
         except Exception as e:
-            logger.warning("IR BANK ダウンロード失敗 (%s): %s", code, e)
+            logger.warning("IR BANK ダウンロード失敗 (%s / %s): %s", code, filename, e)
             return None
+
+
+def _download_company_csv(code: str) -> bytes | None:
+    """IR BANK から銘柄個別の年次全データCSVを取得"""
+    if _requests is None:
+        logger.warning("IR BANK: requests がインストールされていないためスキップ")
+        return None
+    return _download_csv(code, _FILE_ALL, _BASE_URL)
 
 
 # ── CSVパーサー ───────────────────────────────────────────────────────────────
@@ -261,3 +263,145 @@ def parse_irbank(code: str, max_years: int = 10) -> tuple[dict, dict, dict, list
         dates[0]  if dates else "-",
     )
     return inc_data, bs_data, cf_data, dates
+
+
+# ── 四半期データ ──────────────────────────────────────────────────────────────
+
+def _ym_to_quarter_end(ym: str) -> str | None:
+    """IR BANK の 'YYYY/MM' → 月末日付文字列 'YYYY-MM-DD'"""
+    import calendar
+    try:
+        y, m = int(ym[:4]), int(ym[5:7])
+        last_day = calendar.monthrange(y, m)[1]
+        return f"{y:04d}-{m:02d}-{last_day:02d}"
+    except Exception:
+        return None
+
+
+def parse_irbank_quarterly(code: str, max_q: int = 8) -> dict | None:
+    """
+    IR BANK の四半期CSV（q-data.csv）から四半期財務データを取得。
+
+    Returns:
+        {
+          'dates':    ['2024-12-31', '2024-09-30', ...],  # 新しい順
+          'income':   {'Total Revenue': [...], 'Operating Income': [...], ...},
+          'balance':  {'Total Assets': [...], 'Stockholders Equity': [...], ...},
+          'cashflow': {'Operating Cash Flow': [...], ...},
+        }
+        または None（データなし）
+    """
+    raw = _download_csv(code, _FILE_Q, _BASE_URL_Q)
+    if raw is None:
+        return None
+
+    sections = _parse_multisection_csv(raw)
+    if not sections:
+        logger.info("IR BANK 四半期: コード %s のセクションデータなし", code)
+        return None
+
+    pl_rows = sorted(
+        sections.get("業績", []),
+        key=lambda r: r.get("年度", ""),
+        reverse=True,
+    )[:max_q]
+
+    if not pl_rows:
+        return None
+
+    # 年度文字列 → 月末日付
+    dates = []
+    for r in pl_rows:
+        ym = r.get("年度", "")
+        d = _ym_to_quarter_end(ym)
+        if d:
+            dates.append(d)
+        else:
+            dates.append(ym)
+
+    n = len(dates)
+    bs_rows = sorted(sections.get("財務", []), key=lambda r: r.get("年度", ""), reverse=True)[:max_q]
+    cf_rows = sorted(sections.get("CF",   []), key=lambda r: r.get("年度", ""), reverse=True)[:max_q]
+
+    bs_by_ym = {r.get("年度", ""): r for r in bs_rows}
+    cf_by_ym = {r.get("年度", ""): r for r in cf_rows}
+    pl_yms   = [r.get("年度", "") for r in pl_rows]
+
+    def _bs(col: str, ym: str) -> float | None:
+        return _safe_float(bs_by_ym.get(ym, {}).get(col))
+
+    def _cf(col: str, ym: str) -> float | None:
+        return _safe_float(cf_by_ym.get(ym, {}).get(col))
+
+    # 損益
+    rev_list  = [_safe_float(r.get("売上高"))   for r in pl_rows]
+    opi_list  = [_safe_float(r.get("営業利益")) for r in pl_rows]
+    ni_list   = [_safe_float(r.get("純利益"))   for r in pl_rows]
+    eps_list  = [_safe_float(r.get("EPS"))       for r in pl_rows]
+    gp_list   = [_safe_float(r.get("売上総利益")) for r in pl_rows]
+    # 経常利益 → Pretax Income の近似
+    pret_list = [_safe_float(r.get("経常利益")) for r in pl_rows]
+
+    income: dict[str, list] = {}
+    if any(v is not None for v in rev_list):
+        income['Total Revenue'] = rev_list
+    if any(v is not None for v in opi_list):
+        income['Operating Income'] = opi_list
+    if any(v is not None for v in ni_list):
+        income['Net Income'] = ni_list
+    if any(v is not None for v in eps_list):
+        income['Diluted EPS'] = eps_list
+    if any(v is not None for v in gp_list):
+        income['Gross Profit'] = gp_list
+    if any(v is not None for v in pret_list):
+        income['Pretax Income'] = pret_list
+
+    # 貸借対照表
+    ta_list  = [_bs("総資産",   ym) for ym in pl_yms]
+    eq_list  = [_bs("株主資本", ym) for ym in pl_yms]
+    bs_short = [_bs("短期借入金", ym) for ym in pl_yms]
+    bs_long  = [_bs("長期借入金",  ym) for ym in pl_yms]
+    td_list  = [(s or 0) + (l or 0) if (s is not None or l is not None) else None
+                for s, l in zip(bs_short, bs_long)]
+    ca_list  = [_bs("流動資産",   ym) for ym in pl_yms]
+    cl_list  = [_bs("流動負債",   ym) for ym in pl_yms]
+    cash_list_q = [_cf("現金同等物", ym) for ym in pl_yms]
+
+    balance: dict[str, list] = {}
+    if any(v is not None for v in ta_list):
+        balance['Total Assets'] = ta_list
+    if any(v is not None for v in eq_list):
+        balance['Stockholders Equity'] = eq_list
+    if any(v is not None for v in td_list):
+        balance['Total Debt'] = td_list
+    if any(v is not None for v in ca_list):
+        balance['Current Assets'] = ca_list
+    if any(v is not None for v in cl_list):
+        balance['Current Liabilities'] = cl_list
+    if any(v is not None for v in cash_list_q):
+        balance['Cash And Cash Equivalents'] = cash_list_q
+
+    # キャッシュフロー
+    ocf_list_q   = [_cf("営業CF",   ym) for ym in pl_yms]
+    capex_list_q = [_cf("設備投資", ym) for ym in pl_yms]
+    capex_list_q = [-abs(v) if v is not None else None for v in capex_list_q]
+    inv_cf_list  = [_cf("投資CF",   ym) for ym in pl_yms]
+    fin_cf_list  = [_cf("財務CF",   ym) for ym in pl_yms]
+
+    cashflow: dict[str, list] = {}
+    if any(v is not None for v in ocf_list_q):
+        cashflow['Operating Cash Flow'] = ocf_list_q
+    if any(v is not None for v in capex_list_q):
+        cashflow['Capital Expenditure'] = capex_list_q
+    if any(v is not None for v in inv_cf_list):
+        cashflow['Investing Cash Flow'] = inv_cf_list
+    if any(v is not None for v in fin_cf_list):
+        cashflow['Financing Cash Flow'] = fin_cf_list
+
+    if not income and not balance:
+        logger.info("IR BANK 四半期: コード %s — 有効データなし", code)
+        return None
+
+    logger.info("IR BANK 四半期取得成功: %s (%dQ / %s〜%s)", code, n,
+                dates[-1] if dates else "-", dates[0] if dates else "-")
+    return {'dates': dates, 'income': income, 'balance': balance, 'cashflow': cashflow}

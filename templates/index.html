@@ -44,7 +44,7 @@
       --card-hover-bg: #1c1c24; --card-hover-shadow: rgba(0,0,0,0.55);
       --upload-border: rgba(255,255,255,0.12); --upload-hover-bg: rgba(212,133,42,0.04);
       --scrollbar-track: #14141a; --scrollbar-thumb: #2a2a36;
-      --chart-text: rgba(240,240,242,0.28); --chart-grid: rgba(255,255,255,0.03); --chart-grid-y: rgba(255,255,255,0.025);
+      --chart-text: rgba(240,240,242,0.72); --chart-grid: rgba(255,255,255,0.03); --chart-grid-y: rgba(255,255,255,0.025);
       --metric-bar-bg: #24242e;
       --input-bg: #1c1c24;
       /* Spacing tokens */
@@ -64,7 +64,7 @@
       --card-hover-bg: #ffffff; --card-hover-shadow: rgba(0,0,0,0.07);
       --upload-border: rgba(0,0,0,0.14); --upload-hover-bg: rgba(212,133,42,0.03);
       --scrollbar-track: #e8e8ec; --scrollbar-thumb: #c8c8d0;
-      --chart-text: rgba(14,14,18,0.45); --chart-grid: rgba(0,0,0,0.05); --chart-grid-y: rgba(0,0,0,0.04);
+      --chart-text: rgba(14,14,18,0.75); --chart-grid: rgba(0,0,0,0.05); --chart-grid-y: rgba(0,0,0,0.04);
       --metric-bar-bg: #dcdce4;
       --input-bg: #ebebef;
     }
@@ -3217,6 +3217,37 @@
       const qAT  = rev_.map((v, i) => v != null && ta[i] ? v / ta[i] : null);
       const qLev = ta.map((v, i) => v != null && eq[i] && eq[i] !== 0 ? v / eq[i] : null);
 
+      // Additional series for breakdown panels
+      const opi  = revQ(inc['Operating Income']);
+      const gp   = revQ(inc['Gross Profit']);
+      const td   = revQ(bal['Total Debt']);
+      const ppe  = revQ(bal['Net PPE'] || bal['Net Property Plant Equipment'] || []);
+      const arR  = revQ(bal['Accounts Receivable'] || bal['Net Receivables'] || []);
+      const invR = revQ(bal['Inventory'] || []);
+      const cogs = rev_.map((v, i) => v != null && gp[i] != null ? v - gp[i] : null);
+      const qOpM   = opi.map((v, i)  => safeDiv(v, rev_[i]) != null ? safeDiv(v, rev_[i]) * 100 : null);
+      const qCogsR = cogs.map((v, i) => safeDiv(v, rev_[i]) != null ? safeDiv(v, rev_[i]) * 100 : null);
+      const qEqR   = eq.map((v, i)   => safeDiv(v, ta[i])  != null ? safeDiv(v, ta[i]) * 100   : null);
+      const qDebtR = td.map((v, i)   => safeDiv(v, ta[i])  != null ? safeDiv(v, ta[i]) * 100   : null);
+      const qFAT   = ppe.map((v, i)  => v != null && v > 0  ? safeDiv(rev_[i], v)    : null);
+      const qART   = arR.map((v, i)  => v != null && v > 0  ? safeDiv(rev_[i], v)    : null);
+      const qInvT  = invR.map((v, i) => v != null && v > 0  ? safeDiv(cogs[i], v)    : null);
+      // SG&A Ratio, Interest Burden, Tax Retention
+      const sga_   = revQ(inc['Selling General Administrative'] || inc['Selling General And Administration'] || []);
+      const pret_  = revQ(inc['Pretax Income'] || []);
+      const qSgaR     = sga_.map((v, i)  => safeDiv(v, rev_[i]) != null ? safeDiv(v, rev_[i]) * 100  : null);
+      const qIntBurden = pret_.map((v, i) => opi[i] != null && opi[i] > 0 ? safeDiv(v, opi[i]) * 100 : null);
+      const qTaxRet    = ni.map((v, i)    => pret_[i] != null && pret_[i] !== 0 ? safeDiv(v, pret_[i]) * 100 : null);
+      // Non-Op. Income Rate = (Pretax - Op.Income) / Revenue (非営業損益が売上に占める割合)
+      const qNonOpR    = pret_.map((v, i) => v != null && opi[i] != null && rev_[i] != null && rev_[i] !== 0
+        ? safeDiv(v - opi[i], rev_[i]) * 100 : null);
+      // Check: OpM × IB × TR should ≈ NPM
+      const qNPMCheck  = qOpM.map((v, i) => v != null && qIntBurden[i] != null && qTaxRet[i] != null
+        ? v * (qIntBurden[i] / 100) * (qTaxRet[i] / 100) : null);
+      // Latest value and QoQ delta helpers
+      const qL = arr => { const vs = arr.filter(v => v != null); return vs.length ? vs[vs.length-1] : null; };
+      const qD = arr => { const vs = arr.filter(v => v != null); return vs.length >= 2 ? vs[vs.length-1] - vs[vs.length-2] : null; };
+
       // DuPont: filter to only quarters where all base data (ni, eq, rev_, ta) is non-null
       // This unifies the date range so all 4 DuPont charts show identical x-axis
       const dupontMask = dates.map((_, i) => ni[i] != null && eq[i] != null && rev_[i] != null && ta[i] != null);
@@ -3287,6 +3318,25 @@
 
       const isROENeg = latestROE != null && latestROE < 0;
 
+      // Breakdown node renderer (mirrors annual `node()`)
+      const qBNode = (label, val, delta, unit='') => {
+        if (val == null) return '';
+        const clr = delta == null ? '#6b7280' : delta > 0 ? '#4ade80' : delta < 0 ? '#f87171' : '#6b7280';
+        const arrow = delta == null ? '' : delta > 0 ? '&#9650;' : delta < 0 ? '&#9660;' : '';
+        return `<div class="flex items-center justify-between p-2 th-bg-2 border mb-1" style="border-color:var(--border);border-radius:0">
+          <span class="text-[10px] font-medium th-text-s">${label}</span>
+          <div class="flex items-center gap-2 tabular-nums">
+            <span class="text-[11px] font-bold th-text">${fmtNum(val,2)}${unit}</span>
+            ${delta != null ? `<span class="text-[10px] font-semibold" style="color:${clr}">${arrow} ${fmtNum(Math.abs(delta),2)}</span>` : ''}
+          </div></div>`;
+      };
+
+      // 1Y change from quarterly data (oldest valid → newest valid)
+      const _qPBRv = qPBR.filter(v => v != null);
+      const q1YPBRChg = _qPBRv.length >= 2 ? _qPBRv[_qPBRv.length-1] - _qPBRv[0] : null;
+      const _qPERv = qPER.filter(v => v != null);
+      const q1YPERChg = _qPERv.length >= 2 ? _qPERv[_qPERv.length-1] - _qPERv[0] : null;
+
       el.innerHTML = `
         <!-- PBR badge (top) -->
         <div class="text-center mb-6">
@@ -3301,7 +3351,7 @@
             <p class="text-[10px] uppercase tracking-[0.2em] th-text-m mb-1" style="font-family:'IBM Plex Mono','Courier New',monospace">PBR</p>
             <p class="text-5xl font-bold tabular-nums" style="color:var(--brand);font-family:'IBM Plex Mono','Courier New',monospace">${latestPBR != null ? fmtNum(latestPBR,2) : (pbrVal != null ? fmtNum(pbrVal,2) : '—')}<span class="text-2xl th-text-m">x</span></p>
             <p class="text-[11px] th-text-m mt-1">${t('Latest (Q)')}</p>
-            <p class="text-[11px] th-text-m mt-1">${t('5Y Change:')} <span class="${pbrChg>0?'text-green-400':pbrChg<0?'text-red-400':'th-text-m'}">${pbrChg!=null?((pbrChg>0?'+':'')+fmtNum(pbrChg,2)+'x'):'—'}</span></p>
+            <p class="text-[11px] th-text-m mt-1">${t('1Y Change:')} <span class="${q1YPBRChg>0?'text-green-400':q1YPBRChg<0?'text-red-400':'th-text-m'}">${q1YPBRChg!=null?((q1YPBRChg>0?'+':'')+fmtNum(q1YPBRChg,2)+'x'):'—'}</span></p>
           </div>`}
         </div>
 
@@ -3331,7 +3381,7 @@
               <p class="text-3xl font-bold tabular-nums" style="font-family:'IBM Plex Mono','Courier New',monospace">${latestPER!=null?fmtNum(latestPER,1):(perVal!=null?fmtNum(perVal,1):'—')}<span class="text-lg th-text-m">x</span></p>
             </div>
             <p class="text-[10px] th-text-m mb-1">${t('per-desc')}</p>
-            <p class="text-[11px] th-text-m mb-3">${t('5Y Change:')} <span class="${perChg>0?'text-green-400':perChg<0?'text-red-400':'th-text-m'}">${perChg!=null?((perChg>0?'+':'')+fmtNum(perChg,1)+'x'):'—'}</span></p>
+            <p class="text-[11px] th-text-m mb-3">${t('1Y Change:')} <span class="${q1YPERChg>0?'text-green-400':q1YPERChg<0?'text-red-400':'th-text-m'}">${q1YPERChg!=null?((q1YPERChg>0?'+':'')+fmtNum(q1YPERChg,1)+'x'):'—'}</span></p>
             <canvas id="qPBRPERChart" style="max-height:140px"></canvas>
           </div>
           <div class="p-6 th-bg-2 border" style="border-color:var(--border-s);border-radius:0">
@@ -3361,23 +3411,56 @@
           </div>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <!-- NET PROFIT MARGIN card -->
           <div class="p-5 th-bg-2 border" style="border-color:var(--border-s);border-radius:0">
             <div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 bg-brand" style="border-radius:0"></div><span class="text-[10px] font-bold uppercase tracking-[0.18em] th-text-m" style="font-family:'IBM Plex Mono','Courier New',monospace">${t('Net Profit Margin')}</span></div>
             <p class="text-2xl font-bold tabular-nums mb-1" style="font-family:'IBM Plex Mono','Courier New',monospace">${latestNPM!=null?fmtNum(latestNPM,1):'—'}<span class="text-sm th-text-m">%</span></p>
             <p class="text-[10px] th-text-m mb-3">${t('Net Margin')} = ${t('Net Income')} / ${t('Revenue')}</p>
             <canvas id="qDupontNPMChart" style="max-height:120px"></canvas>
+            <div class="mt-4 ml-2 pl-3 border-l border-blue-500/20">
+              <p class="text-[10px] th-text-m mb-2">&#9492; ${t('breakdown-npm')}</p>
+              ${qBNode(t('Operating Margin'), qL(qOpM), qD(qOpM), '%')}
+              <div class="ml-3 pl-3 border-l border-blue-500/10 mb-1">
+                ${qBNode(t('COGS Ratio'), qL(qCogsR), qD(qCogsR), '%')}
+                ${qBNode(t('SG&A Ratio'), qL(qSgaR), qD(qSgaR), '%')}
+              </div>
+              <p class="text-[10px] th-text-m mt-2 mb-1">&#9492; ${t('営業利益→純利益ギャップ')}</p>
+              ${qBNode(t('金利負担率'), qL(qIntBurden), qD(qIntBurden), '%')}
+              ${qBNode(t('営業外損益率'), qL(qNonOpR), qD(qNonOpR), '%')}
+              ${qBNode(t('税引後利益率'), qL(qTaxRet), qD(qTaxRet), '%')}
+              ${(()=>{ const chk = qL(qNPMCheck), act = qL(qNPM); return chk!=null&&act!=null ? `<p class="text-[9px] th-text-m mt-1">${t('検算')}: ${fmtNum(chk,2)}% vs ${t('実績')} ${fmtNum(act,2)}%</p>` : ''; })()}
+            </div>
           </div>
+          <!-- ASSET TURNOVER card -->
           <div class="p-5 th-bg-2 border" style="border-color:var(--border-s);border-radius:0">
             <div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 bg-brand" style="border-radius:0"></div><span class="text-[10px] font-bold uppercase tracking-[0.18em] th-text-m" style="font-family:'IBM Plex Mono','Courier New',monospace">${t('Asset Turnover')}</span></div>
             <p class="text-2xl font-bold tabular-nums mb-1" style="font-family:'IBM Plex Mono','Courier New',monospace">${latestAT!=null?fmtNum(latestAT,3):'—'}<span class="text-sm th-text-m">x</span></p>
             <p class="text-[10px] th-text-m mb-3">${t('Asset Turnover')} = ${t('Revenue')} / ${t('Total Assets')}</p>
             <canvas id="qDupontATChart" style="max-height:120px"></canvas>
+            <div class="mt-4 ml-2 pl-3 border-l border-brand/20">
+              <p class="text-[10px] th-text-m mb-2">&#9492; ${t('breakdown-at')}</p>
+              ${qBNode(t('総資産回転率'), qL(qAT), qD(qAT), 'x')}
+              <div class="ml-3 pl-3 border-l border-brand/10 mb-1">
+                ${qBNode(t('固定資産回転率'), qL(qFAT), qD(qFAT), 'x')}
+                ${qBNode(t('売上債権回転率'), qL(qART), qD(qART), 'x')}
+                ${qBNode(t('棚卸資産回転率'), qL(qInvT), qD(qInvT), 'x')}
+              </div>
+            </div>
           </div>
+          <!-- FINANCIAL LEVERAGE card -->
           <div class="p-5 th-bg-2 border" style="border-color:var(--border-s);border-radius:0">
             <div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 bg-brand" style="border-radius:0"></div><span class="text-[10px] font-bold uppercase tracking-[0.18em] th-text-m" style="font-family:'IBM Plex Mono','Courier New',monospace">${t('Financial Leverage')}</span></div>
             <p class="text-2xl font-bold tabular-nums mb-1" style="font-family:'IBM Plex Mono','Courier New',monospace">${latestLev!=null?fmtNum(latestLev,2):'—'}<span class="text-sm th-text-m">x</span></p>
             <p class="text-[10px] th-text-m mb-3">${t('Leverage')} = ${t('Total Assets')} / ${t('Equity')}</p>
             <canvas id="qDupontLEVChart" style="max-height:120px"></canvas>
+            <div class="mt-4 ml-2 pl-3 border-l border-amber-500/20">
+              <p class="text-[10px] th-text-m mb-2">&#9492; ${t('breakdown-lev')}</p>
+              ${qBNode(t('財務レバレッジ'), qL(qLev), qD(qLev), 'x')}
+              <div class="ml-3 pl-3 border-l border-amber-500/10 mb-1">
+                ${qBNode(t('自己資本比率'), qL(qEqR), qD(qEqR), '%')}
+                ${qBNode(t('負債比率'), qL(qDebtR), qD(qDebtR), '%')}
+              </div>
+            </div>
           </div>
         </div>
 

@@ -19,8 +19,10 @@ except ImportError:
 
 try:
     from irbank_parser import parse_irbank as _parse_irbank
+    from irbank_parser import parse_irbank_quarterly as _parse_irbank_quarterly
 except ImportError:
     _parse_irbank = None
+    _parse_irbank_quarterly = None
 
 try:
     from edinet_parser import parse_edinet as _parse_edinet
@@ -101,6 +103,36 @@ _SEC_CASHFLOW_TAGS = {
 _SEC_EPS_TAGS = {
     'eps': ['EarningsPerShareBasic'],
     'eps_diluted': ['EarningsPerShareDiluted'],
+}
+
+# SEC quarterly: 内部キー → yfinance field名（q_income/q_balance/q_cashflow へのマージ用）
+_SEC_Q_INCOME_MAP = {
+    'revenue':       'Total Revenue',
+    'gross_profit':  'Gross Profit',
+    'op_income':     'Operating Income',
+    'net_income':    'Net Income',
+    'cogs':          'Cost Of Revenue',
+    'sga':           'Selling General Administrative',
+    'pretax_income': 'Pretax Income',
+    'income_tax':    'Tax Provision',
+    'eps_diluted':   'Diluted EPS',
+}
+_SEC_Q_BALANCE_MAP = {
+    'total_assets':   'Total Assets',
+    'total_equity':   'Stockholders Equity',
+    'receivables':    'Accounts Receivable',
+    'inventory':      'Inventory',
+    'fixed_assets':   'Net PPE',
+    'payables':       'Accounts Payable',
+    'current_assets': 'Current Assets',
+    'current_liab':   'Current Liabilities',
+    'long_term_debt': 'Long Term Debt',
+}
+_SEC_Q_CF_MAP = {
+    'ocf':          'Operating Cash Flow',
+    'capex':        'Capital Expenditure',
+    'investing_cf': 'Investing Cash Flow',
+    'financing_cf': 'Financing Cash Flow',
 }
 
 
@@ -293,6 +325,81 @@ def _get_sec_annual_series(
         return []
     result = sorted(merged.items(), key=lambda x: x[0], reverse=True)[:max_years]
     return [(fy, e['val']) for fy, e in result]
+
+def _sec_quarterly_series(
+    us_gaap: dict, concept_names: list[str],
+    unit_key: str = 'USD', is_instant: bool = False, max_q: int = 5
+) -> list[tuple[str, float]]:
+    """
+    SEC 10-Q ファイリングから単独四半期値を抽出。
+    - is_instant=False (P/L・CF): YTD累積を単独四半期に変換
+    - is_instant=True  (B/S)    : 期末残高をそのまま使用
+    Returns: [(end_date_str, value), ...] 新しい順
+    """
+    from datetime import date as _date
+    by_key: dict = {}
+    for concept in concept_names:
+        if concept not in us_gaap:
+            continue
+        for e in us_gaap[concept].get('units', {}).get(unit_key, []):
+            if e.get('form') != '10-Q' or e.get('val') is None or not e.get('end'):
+                continue
+            fy, fp, end = e.get('fy'), e.get('fp', ''), e['end']
+            if is_instant:
+                key = end
+            else:
+                if not fy or fp not in ('Q1', 'Q2', 'Q3'):
+                    continue
+                key = (fy, fp)
+            prev = by_key.get(key)
+            if prev is None or (e.get('filed') or '') > (prev.get('filed') or ''):
+                by_key[key] = e
+    if not by_key:
+        return []
+
+    if is_instant:
+        result = [(e['end'], float(e['val'])) for e in by_key.values()]
+        result.sort(key=lambda x: x[0], reverse=True)
+        return result[:max_q]
+
+    # Duration: YTD累積 → 単独四半期
+    by_fy: dict = {}
+    for (fy, fp), e in by_key.items():
+        by_fy.setdefault(fy, {})[fp] = e
+
+    standalone: dict[str, float] = {}
+    for fy, fps in by_fy.items():
+        q1 = fps.get('Q1')
+        q2 = fps.get('Q2')
+        q3 = fps.get('Q3')
+        if q1:
+            standalone[q1['end']] = float(q1['val'])
+        if q2:
+            days = None
+            if q2.get('start'):
+                try:
+                    days = (_date.fromisoformat(q2['end']) - _date.fromisoformat(q2['start'])).days
+                except Exception:
+                    pass
+            if days is not None and days < 110:
+                standalone[q2['end']] = float(q2['val'])
+            elif q1:
+                standalone[q2['end']] = float(q2['val']) - float(q1['val'])
+        if q3:
+            days = None
+            if q3.get('start'):
+                try:
+                    days = (_date.fromisoformat(q3['end']) - _date.fromisoformat(q3['start'])).days
+                except Exception:
+                    pass
+            if days is not None and days < 110:
+                standalone[q3['end']] = float(q3['val'])
+            elif q2:
+                standalone[q3['end']] = float(q3['val']) - float(q2['val'])
+
+    result = sorted(standalone.items(), key=lambda x: x[0], reverse=True)
+    return result[:max_q]
+
 
 def parse_edgar_us(ticker_symbol: str) -> tuple[dict, dict, dict, list[str]] | None:
     """
@@ -1456,6 +1563,129 @@ def parse_yfinance(ticker_symbol):
     q_cashflow = _extract_quarterly_aligned(qc_df, [
         'Operating Cash Flow', 'Free Cash Flow', 'Capital Expenditure',
     ], _unified_cols)
+
+    # ── 米国株: SEC EDGAR 10-Q から四半期データを補完 ───────────────────────
+    if _is_likely_us and q_dates:
+        try:
+            _sec_cik_q = _ticker_to_cik(ticker_symbol)
+            _sec_facts_q = _fetch_sec_facts(_sec_cik_q) if _sec_cik_q else None
+            if _sec_facts_q is not None:
+                _us_gaap_q = _sec_facts_q.get('facts', {}).get('us-gaap', {})
+                if _us_gaap_q:
+                    _all_inc_tags = {**_SEC_INCOME_TAGS, **_SEC_EPS_TAGS}
+
+                    from datetime import datetime as _dt
+
+                    def _fuzzy_lookup(target_str, by_date, window=7):
+                        """±window日以内で最近傍のSEC日付値を返す（完全一致優先）"""
+                        if target_str in by_date:
+                            return by_date[target_str]
+                        try:
+                            t = _dt.fromisoformat(target_str)
+                        except Exception:
+                            return None
+                        best_val, best_diff = None, window + 1
+                        for d, v in by_date.items():
+                            try:
+                                diff = abs((_dt.fromisoformat(d) - t).days)
+                                if diff < best_diff:
+                                    best_diff, best_val = diff, v
+                            except Exception:
+                                continue
+                        return best_val
+
+                    def _merge_sec_q(q_dict, sec_key_map, tag_src, is_instant):
+                        """SEC四半期データをq_dictに補完（Noneのみ上書き、±7日ファジーマッチ）"""
+                        for int_key, field_name in sec_key_map.items():
+                            tags = tag_src.get(int_key, [])
+                            if not tags:
+                                continue
+                            sec_series = _sec_quarterly_series(
+                                _us_gaap_q, tags, is_instant=is_instant
+                            )
+                            if not sec_series:
+                                continue
+                            sec_by_date = {d: v for d, v in sec_series}
+                            current = q_dict.get(field_name, [None] * len(q_dates))
+                            filled = list(current) + [None] * max(0, len(q_dates) - len(current))
+                            updated = False
+                            for i, qd in enumerate(q_dates):
+                                if filled[i] is None:
+                                    v = _fuzzy_lookup(qd, sec_by_date)
+                                    if v is not None:
+                                        filled[i] = v
+                                        updated = True
+                            if updated or (field_name not in q_dict and
+                                           any(v is not None for v in filled)):
+                                q_dict[field_name] = filled[:len(q_dates)]
+
+                    _merge_sec_q(q_income,   _SEC_Q_INCOME_MAP,  _all_inc_tags,       False)
+                    _merge_sec_q(q_balance,  _SEC_Q_BALANCE_MAP, _SEC_BALANCE_TAGS,   True)
+                    _merge_sec_q(q_cashflow, _SEC_Q_CF_MAP,      _SEC_CASHFLOW_TAGS,  False)
+                    logger.info("SEC 10-Q 四半期補完完了: %s", ticker_symbol)
+        except Exception as _e:
+            logger.warning("SEC四半期補完スキップ (%s): %s", ticker_symbol, _e)
+
+    # ── 日本株: IR BANK 四半期データを補完 ─────────────────────────────────────
+    if _is_japan and _jp_code and _parse_irbank_quarterly is not None:
+        try:
+            _ibq = _parse_irbank_quarterly(_jp_code, max_q=8)
+            if _ibq is not None:
+                from datetime import datetime as _dt2
+
+                def _fuzzy_lookup_generic(target_str, by_date, window=7):
+                    if target_str in by_date:
+                        return by_date[target_str]
+                    try:
+                        t = _dt2.fromisoformat(target_str)
+                    except Exception:
+                        return None
+                    best_val, best_diff = None, window + 1
+                    for d, v in by_date.items():
+                        try:
+                            diff = abs((_dt2.fromisoformat(d) - t).days)
+                            if diff < best_diff:
+                                best_diff, best_val = diff, v
+                        except Exception:
+                            continue
+                    return best_val
+
+                def _merge_irbank_q(q_dict, ibq_dict):
+                    """IR BANK四半期データを q_dict に補完（Noneのみ、±7日ファジーマッチ）"""
+                    ibq_dates = _ibq['dates']
+                    for field, values in ibq_dict.items():
+                        by_date = {ibq_dates[i]: values[i]
+                                   for i in range(min(len(ibq_dates), len(values)))
+                                   if values[i] is not None}
+                        if not by_date:
+                            continue
+                        current = q_dict.get(field, [None] * len(q_dates))
+                        filled = list(current) + [None] * max(0, len(q_dates) - len(current))
+                        updated = False
+                        for i, qd in enumerate(q_dates):
+                            if filled[i] is None:
+                                v = _fuzzy_lookup_generic(qd, by_date)
+                                if v is not None:
+                                    filled[i] = v
+                                    updated = True
+                        if updated or (field not in q_dict and any(v is not None for v in filled)):
+                            q_dict[field] = filled[:len(q_dates)]
+
+                _merge_irbank_q(q_income,   _ibq['income'])
+                _merge_irbank_q(q_balance,  _ibq['balance'])
+                _merge_irbank_q(q_cashflow, _ibq['cashflow'])
+                # q_dates が空の場合 IR BANK 日付で補完
+                if not q_dates and _ibq['dates']:
+                    q_dates = _ibq['dates']
+                    for field, values in _ibq['income'].items():
+                        q_income[field] = list(values[:len(q_dates)])
+                    for field, values in _ibq['balance'].items():
+                        q_balance[field] = list(values[:len(q_dates)])
+                    for field, values in _ibq['cashflow'].items():
+                        q_cashflow[field] = list(values[:len(q_dates)])
+                logger.info("IR BANK 四半期補完完了: %s", ticker_symbol)
+        except Exception as _e:
+            logger.warning("IR BANK四半期補完スキップ (%s): %s", ticker_symbol, _e)
 
     if q_dates:
         ts_data['quarterly'] = {

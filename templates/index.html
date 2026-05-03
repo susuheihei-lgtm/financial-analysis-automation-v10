@@ -637,7 +637,7 @@
         <!-- Sub-tabs: [財務分析② 2年分析] [財務分析① 10年分析] -->
         <div class="mb-6 tab-nav-wrap">
           <nav class="flex gap-0 border-b" id="subTabNav" style="border-color:var(--border-s)">
-            <button class="sub-tab-btn sub-tab-active px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] border-b-2 transition-all whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace;border-color:var(--accent-v0)" data-subtab="quarterly" data-i18n="2-Year Analysis">2-Year Analysis</button>
+            <button class="sub-tab-btn sub-tab-active px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] border-b-2 transition-all whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace;border-color:var(--accent-v0)" data-subtab="quarterly" data-i18n="2-Year Analysis">1-Year Analysis</button>
             <button class="sub-tab-btn px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] th-text-m border-b-2 border-transparent transition-all whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace" data-subtab="annual" data-i18n="10-Year Analysis">10-Year Analysis</button>
           </nav>
         </div>
@@ -1358,7 +1358,7 @@
       'MAX':                  { ja: '全期間', en: 'MAX' },
       // Sub-tab labels
       '10-Year Analysis':     { ja: '10年財務分析', en: '10-Year Analysis' },
-      '2-Year Analysis':      { ja: '2年財務分析', en: '2-Year Analysis' },
+      '2-Year Analysis':      { ja: '1年財務分析', en: '1-Year Analysis' },
       // Quarterly sub-tabs
       'Time Series Analysis': { ja: '時系列分析', en: 'Time Series Analysis' },
       'PBR Analysis (Q)':     { ja: 'PBR分析（四半期）', en: 'PBR Analysis (Q)' },
@@ -2635,6 +2635,9 @@
           labels.forEach((l, i) => { if (values[i] != null) { fl.push(l); fv.push(values[i]); } });
           return { labels: fl, values: fv };
         }
+        function miniBarColors(values, posColor) {
+          return values.map(v => v != null && v < 0 ? '#ef444499' : posColor + 'CC');
+        }
         function dataNote(total, valid) {
           if (valid >= total) return '';
           return currentLang === 'ja' ? `${valid}/${total}年分データあり` : `${valid}/${total} years data`;
@@ -2663,7 +2666,7 @@
             const note = dataNote(allDates.length, perL.length);
             if (note && perChartContainer) perChartContainer.insertAdjacentHTML('beforeend', `<p class="text-[9px] th-text-m mt-1 text-right">${note}</p>`);
             new Chart(perCanvas, { ...miniOpts('#D4852A', metricFmt('pe_ratio')), data: {
-              labels: perL, datasets: [{ data: perV, backgroundColor: '#D4852ACC', borderColor: 'transparent', borderWidth: 0, borderRadius: 0 }]
+              labels: perL, datasets: [{ data: perV, backgroundColor: miniBarColors(perV, '#D4852A'), borderColor: 'transparent', borderWidth: 0, borderRadius: 0 }]
             }});
           }
         } else if (perCanvas) {
@@ -2687,7 +2690,7 @@
             const note = dataNote(allDates.length, roeL.length);
             if (note && roeChartContainer) roeChartContainer.insertAdjacentHTML('beforeend', `<p class="text-[9px] th-text-m mt-1 text-right">${note}</p>`);
             new Chart(roeCanvas, { ...miniOpts('#D4852A', metricFmt('roe')), data: {
-              labels: roeL, datasets: [{ data: roeV, backgroundColor: '#D4852ACC', borderColor: 'transparent', borderWidth: 0, borderRadius: 0 }]
+              labels: roeL, datasets: [{ data: roeV, backgroundColor: miniBarColors(roeV, '#D4852A'), borderColor: 'transparent', borderWidth: 0, borderRadius: 0 }]
             }});
           }
         } else if (roeCanvas) {
@@ -2708,7 +2711,7 @@
           const { labels: dl, values: dv } = filterNulls(allDates, ts[key].slice().reverse());
           if (dl.length === 0) { showNoData(canvas); return; }
           new Chart(canvas, { ...miniOpts(color, metricFmt(key)), data: {
-            labels: dl, datasets: [{ data: dv, backgroundColor: color + 'CC', borderColor: 'transparent', borderWidth: 0, borderRadius: 0 }]
+            labels: dl, datasets: [{ data: dv, backgroundColor: miniBarColors(dv, color), borderColor: 'transparent', borderWidth: 0, borderRadius: 0 }]
           }});
         });
       });
@@ -4198,8 +4201,8 @@
           }]
         : [{
             type: 'bar', label, data: cd.data,
-            backgroundColor: color + 'CC', borderColor: 'transparent',
-            borderWidth: 0, borderRadius: 0, borderSkipped: false,
+            backgroundColor: (cd.data || []).map(v => v != null && v < 0 ? '#ef444499' : color + 'CC'),
+            borderColor: 'transparent', borderWidth: 0, borderRadius: 0, borderSkipped: false,
           }];
 
       // ゼロ/欠損マーカー：値が0（データ実在）→実線、null/undefined（欠損）→破線
@@ -4586,7 +4589,7 @@
               type: 'bar',
               data: {
                 labels: cd.labels,
-                datasets: [{ label, data: cd.data, backgroundColor: color + 'CC', borderColor: 'transparent', borderWidth: 0, borderRadius: 0 }],
+                datasets: [{ label, data: cd.data, backgroundColor: (cd.data || []).map(v => v != null && v < 0 ? '#ef444499' : color + 'CC'), borderColor: 'transparent', borderWidth: 0, borderRadius: 0 }],
               },
               options: {
                 responsive: true, maintainAspectRatio: true,

@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 _DIR = Path(__file__).parent / "data" / "edinet"
 _CACHE_TTL       = 86400.0          # 財務サマリーキャッシュ: 24時間
 _CODE_MAP_TTL    = 86400.0 * 30     # コードマップ更新: 30日
-_RATE_LIMIT_SEC  = 0.4              # EDINET レート制限（3〜5秒推奨だが最小0.3秒）
+_RATE_LIMIT_SEC  = 1.0              # EDINET レート制限（公式推奨: 適度なインターバル）
 
 _BASE          = "https://api.edinet-fsa.go.jp/api/v2"
 _CODE_MAP_URL  = "https://disclosure2dl.edinet-fsa.go.jp/guide/static/disclosure/download/ESE140190.csv"
@@ -197,9 +197,12 @@ def _to_edinet_code(sec_code: str) -> str | None:
 # ── EDINET API ────────────────────────────────────────────────────────────────
 
 def _api_headers(api_key: str) -> dict:
+    # EDINET API v2 は Azure API Management を使用。
+    # Ocp-Apim-Subscription-Key（Azure標準）と Subscription-Key（EDINET仕様）の両方を送る。
     return {
         "User-Agent": "FinancialAnalysisApp admin@example.com",
         "Ocp-Apim-Subscription-Key": api_key,
+        "Subscription-Key": api_key,
     }
 
 
@@ -278,10 +281,15 @@ def _download_xbrl_zip(doc_id: str, api_key: str) -> bytes | None:
         return None
 
     url = f"{_BASE}/documents/{doc_id}"
-    params = {"type": 3, "Subscription-Key": api_key}
+    # type=1: 書類本体のZIP（XBRLインスタンス文書を含む）
+    # type=3 は添付書類のみで XBRL が含まれないため type=1 が正しい
+    params = {"type": 1, "Subscription-Key": api_key}
     try:
         r = _req.get(url, params=params, headers=_api_headers(api_key), timeout=120)
         r.raise_for_status()
+        if len(r.content) < 100:
+            logger.warning("EDINET XBRL ZIP が空に近い (%s): %d bytes", doc_id, len(r.content))
+            return None
         cache.write_bytes(r.content)
         logger.debug("EDINET XBRL ZIP保存: %s (%d bytes)", doc_id, len(r.content))
         return r.content

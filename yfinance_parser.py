@@ -781,6 +781,15 @@ def parse_yfinance(ticker_symbol):
         }
         _fy_end_month = _MONTH_MAP.get(_fy_month_name, 3)
 
+        # ① EDINET（日本株の優先データソース: 有価証券報告書 XBRL、最大10年分）
+        if _parse_edinet is not None:
+            try:
+                _edinet_data = _parse_edinet(_jp_code, fy_end_month=_fy_end_month, max_years=10)
+                if _edinet_data is not None:
+                    logger.info("EDINET データを使用: %s (code=%s)", ticker_symbol, _jp_code)
+            except Exception as e:
+                logger.warning("EDINET フォールバック (IR BANK): %s", e)
+
         # ② IR BANK（EDINET が取れなかった場合）
         if _edinet_data is None and _parse_irbank is not None:
             try:

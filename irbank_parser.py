@@ -321,6 +321,46 @@ def _parse_shihanki_value(td, unit_mult: float) -> float | None:
         return None
 
 
+def _parse_quarter_col_map(table) -> tuple[dict[int, str], int]:
+    """
+    thead のカラム名からデータ列インデックス → フィールド名マッピングを生成。
+    企業によって列構成が異なる（例: IFRS企業は「経常利益」列がなく「当期利益」が3列目）ため動的解析が必要。
+
+    Returns:
+        (col_map, num_data_cols)
+        col_map: {0: "revenue", 1: "op_income", 2: "net_income", ...}
+        num_data_cols: データ列数（通常4）
+    """
+    default_map = {0: "revenue", 1: "op_income", 2: "ordinary_income", 3: "net_income"}
+    thead = table.find("thead")
+    if not thead:
+        return default_map, 4
+
+    cells = thead.find_all(["th", "td"])
+    # 先頭2列（年度・四半期）をスキップしてデータ列のみ処理
+    data_cells = cells[2:]
+    if not data_cells:
+        return default_map, 4
+
+    col_map: dict[int, str] = {}
+    for i, cell in enumerate(data_cells):
+        text = cell.get_text(strip=True)
+        if any(kw in text for kw in ["収益", "売上", "Revenue", "Sales"]):
+            col_map[i] = "revenue"
+        elif "営業利益" in text:
+            col_map[i] = "op_income"
+        elif "経常利益" in text:
+            col_map[i] = "ordinary_income"
+        elif any(kw in text for kw in ["当期利益", "純利益", "当期純利益"]):
+            # 「当期包括利益」は除外（当期利益より長い文字列が先にマッチしないよう順序注意）
+            if "包括" not in text:
+                col_map[i] = "net_income"
+
+    if not col_map:
+        return default_map, len(data_cells)
+    return col_map, len(data_cells)
+
+
 def _scrape_quarterly_html(code: str, max_q: int = 8) -> dict | None:
     """
     irbank.net/{code}/quarter の「四半期毎履歴」テーブルをスクレイピングして
@@ -360,6 +400,11 @@ def _scrape_quarterly_html(code: str, max_q: int = 8) -> dict | None:
     if not tbody:
         return None
 
+    # thead からカラムマッピングを解析（企業ごとに列構成が異なる）
+    col_map, num_data_cols = _parse_quarter_col_map(hist_table)
+    # バッファサイズ = Qラベル列1 + データ列数（通常5）
+    _buf_size = 1 + num_data_cols
+
     records: list[dict] = []
     current_fy_year: int | None = None
     current_fy_month: int | None = None
@@ -371,18 +416,21 @@ def _scrape_quarterly_html(code: str, max_q: int = 8) -> dict | None:
             return
         q_text = q_td.get_text(strip=True)
         q_num = re.search(r"(\d+)Q", q_text)
+        # 通期（年間合計）は四半期データではないためスキップ
         if not q_num:
             return
         q = int(q_num.group(1))
         date_str = _quarter_end_date(fy_year, fy_month, q)
-        vals = [_parse_shihanki_value(td, unit_mult) for td in data_tds[:4]]
-        records.append({
-            "date":             date_str,
-            "revenue":          vals[0] if len(vals) > 0 else None,
-            "op_income":        vals[1] if len(vals) > 1 else None,
-            "ordinary_income":  vals[2] if len(vals) > 2 else None,
-            "net_income":       vals[3] if len(vals) > 3 else None,
-        })
+        vals = [_parse_shihanki_value(td, unit_mult) for td in data_tds]
+        record: dict = {"date": date_str}
+        for i, val in enumerate(vals):
+            field = col_map.get(i)
+            if field:
+                record[field] = val
+        # 未登録フィールドをNoneで補完
+        for f in ("revenue", "op_income", "ordinary_income", "net_income"):
+            record.setdefault(f, None)
+        records.append(record)
 
     for child in tbody.children:
         if not hasattr(child, "name") or not child.name:
@@ -390,18 +438,20 @@ def _scrape_quarterly_html(code: str, max_q: int = 8) -> dict | None:
 
         if child.name == "tr":
             td_buffer = []  # 新FY開始でバッファリセット
-            tds = child.find_all("td")
+            tds = child.find_all("td", recursive=False)
             if not tds:
                 continue
             if tds[0].get("rowspan"):
                 fy_text = tds[0].get_text(strip=True)
                 current_fy_year, current_fy_month = _parse_fy_label(fy_text)
-                if len(tds) >= 7 and current_fy_year and current_fy_month:
-                    _process_row(tds[1], tds[2:7], current_fy_year, current_fy_month)
+                # tds[0]=FY, tds[1]=Qラベル, tds[2..]=データ列（最低6要素必要）
+                if len(tds) >= 2 + num_data_cols and current_fy_year and current_fy_month:
+                    _process_row(tds[1], tds[2:2 + num_data_cols], current_fy_year, current_fy_month)
 
         elif child.name == "td" and current_fy_year and current_fy_month:
             td_buffer.append(child)
-            if len(td_buffer) == 6:
+            if len(td_buffer) == _buf_size:
+                # td_buffer[0]=Qラベル, td_buffer[1:]=データ列
                 _process_row(td_buffer[0], td_buffer[1:], current_fy_year, current_fy_month)
                 td_buffer = []
 
@@ -416,7 +466,7 @@ def _scrape_quarterly_html(code: str, max_q: int = 8) -> dict | None:
     dates = [r["date"] for r in records]
 
     def _build_list(key: str) -> list | None:
-        vals = [r[key] for r in records]
+        vals = [r.get(key) for r in records]
         return vals if any(v is not None for v in vals) else None
 
     income: dict[str, list] = {}

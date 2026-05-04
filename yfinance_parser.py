@@ -24,11 +24,6 @@ except ImportError:
     _parse_irbank = None
     _parse_irbank_quarterly = None
 
-try:
-    from edinet_parser import parse_edinet as _parse_edinet
-except ImportError:
-    _parse_edinet = None
-
 logger = logging.getLogger(__name__)
 
 # ── モジュールレベルキャッシュ（^TNX リスクフリーレート）─────────────────────
@@ -769,35 +764,14 @@ def parse_yfinance(ticker_symbol):
     # ── 日本株: IR BANK で財務データ取得を試行 ─────────────────
     _jp_code = ticker_symbol.replace('.T', '').replace('.J', '') if _is_japan else None
     _irbank_data = None
-    _edinet_data = None
 
-    if _is_japan and _jp_code:
-        # FY終了月を yfinance info から取得（デフォルト3月）
-        _fy_month_name = (info.get('fiscalYearEnd') or 'March').strip()
-        _MONTH_MAP = {
-            'January': 1, 'February': 2, 'March': 3, 'April': 4,
-            'May': 5, 'June': 6, 'July': 7, 'August': 8,
-            'September': 9, 'October': 10, 'November': 11, 'December': 12,
-        }
-        _fy_end_month = _MONTH_MAP.get(_fy_month_name, 3)
-
-        # ① EDINET（日本株の優先データソース: 有価証券報告書 XBRL、最大10年分）
-        if _parse_edinet is not None:
-            try:
-                _edinet_data = _parse_edinet(_jp_code, fy_end_month=_fy_end_month, max_years=10)
-                if _edinet_data is not None:
-                    logger.info("EDINET データを使用: %s (code=%s)", ticker_symbol, _jp_code)
-            except Exception as e:
-                logger.warning("EDINET フォールバック (IR BANK): %s", e)
-
-        # ② IR BANK（EDINET が取れなかった場合）
-        if _edinet_data is None and _parse_irbank is not None:
-            try:
-                _irbank_data = _parse_irbank(_jp_code, max_years=10)
-                if _irbank_data is not None:
-                    logger.info("IR BANK データを使用: %s (code=%s)", ticker_symbol, _jp_code)
-            except Exception as e:
-                logger.warning("IR BANK フォールバック (yfinance): %s", e)
+    if _is_japan and _jp_code and _parse_irbank is not None:
+        try:
+            _irbank_data = _parse_irbank(_jp_code, max_years=5)
+            if _irbank_data is not None:
+                logger.info("IR BANK データを使用: %s (code=%s)", ticker_symbol, _jp_code)
+        except Exception as e:
+            logger.warning("IR BANK フォールバック (yfinance): %s", e)
 
     # ── ETF / ファンド / 暗号通貨など非株式の弾き出し ─────────────────────────
     _quote_type = info.get('quoteType', '')
@@ -818,7 +792,7 @@ def parse_yfinance(ticker_symbol):
 
     # ── データ存在チェック ───────────────────────────────────────────────────
     _has_yf = not ((inc_df is None or inc_df.empty) and (bs_df is None or bs_df.empty))
-    if not _has_yf and _sec_data is None and _irbank_data is None and _edinet_data is None:
+    if not _has_yf and _sec_data is None and _irbank_data is None:
         # 上場廃止・シンボル誤り・データなし
         _exchange = info.get('exchange', '')
         if not _exchange and not info.get('regularMarketPrice'):
@@ -890,18 +864,13 @@ def parse_yfinance(ticker_symbol):
         _s_inc, _s_bs, _s_cf, dates = _sec_data
         all_data, dates = _merge_with_yf_fallback(_s_inc, _s_bs, _s_cf, dates)
 
-    elif _edinet_data is not None:
-        # 日本株: EDINET XBRL の公式データを使用（10年分）
-        _ed_inc, _ed_bs, _ed_cf, dates = _edinet_data
-        all_data, dates = _merge_with_yf_fallback(_ed_inc, _ed_bs, _ed_cf, dates)
-
     elif _irbank_data is not None:
-        # 日本株: IR BANK CSV データを使用（4〜5年分）
+        # 日本株: IR BANK CSV（5年分）をベースにyfinanceで補完
         _ib_inc, _ib_bs, _ib_cf, dates = _irbank_data
         all_data, dates = _merge_with_yf_fallback(_ib_inc, _ib_bs, _ib_cf, dates)
 
     else:
-        # yfinance フォールバック（非上場・海外株など）
+        # yfinance フォールバック（日本株でIR BANKが取れない場合 / 海外株など）
         dates = inc_dates_yf or cf_dates_yf or bs_dates_yf
         all_data = {}
         all_data.update(bs_data_yf)
@@ -915,11 +884,9 @@ def parse_yfinance(ticker_symbol):
     def g_list(key):
         return all_data.get(key, [])
 
-    # ── 米国株: 10年ベースに統一（日本株はソース仕様のままとする）────────────
-    # EDINET/IR BANKを使わなかった場合（米国株 or yfinanceフォールバック）のみ延長
+    # ── 米国株: 10年ベースに統一（日本株はIR BANK仕様の5年のままとする）──────
     _TARGET_YEARS = 10
-    if (_irbank_data is None and _edinet_data is None
-            and dates and len(dates) < _TARGET_YEARS):
+    if _irbank_data is None and _sec_data is None and dates and len(dates) < _TARGET_YEARS:
         _oldest = int(dates[-1])
         _missing = _TARGET_YEARS - len(dates)
         dates = dates + [str(_oldest - i - 1) for i in range(_missing)]

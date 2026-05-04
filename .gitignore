@@ -7,3 +7,5 @@ instance/
 .DS_Store
 venv/
 .venv/
+data/edinet/
+data/irbank/

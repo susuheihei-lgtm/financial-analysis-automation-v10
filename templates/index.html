@@ -2232,15 +2232,12 @@
       // Valuation & Risk (from screening C + quantitative risk)
       const c1 = s['C-1_PER']||{}, c2 = s['C-2_PBR']||{}, c3 = s['C-3_NetDebt_EBITDA']||{}, c4 = s['C-4_流動比率']||{};
       const qDfc = q['Debt/FCF']||{}, qEvf = q['EV/FCF']||{};
-      const betaValV = (data.timeseries || {})._beta;
-      const betaGradeV = betaValV == null ? null : betaValV > 2 ? '×' : betaValV > 1.5 ? '▲' : betaValV > 1.0 ? '○' : '◎';
       $('valuationItems').innerHTML = [
         makeItemCard(t('P/E Ratio'), c1['判定'], fmtNum(c1['実績値'],1,'x'), `${t('Range:')} ${c1['閾値_下限']}–${c1['閾値_上限']}`, 'pe_ratio', c1['基準']),
         makeItemCard(t('P/B Ratio'), c2['判定'], fmtNum(c2['実績値'],2,'x'), `${t('Range:')} ${c2['閾値_下限']}–${c2['閾値_上限']}`, 'pb_ratio', c2['基準']),
         makeItemCard(t('Net Debt / EBITDA'), c3['判定'], fmtNum(c3['実績値'],2,'x'), '', 'nd_ebitda', c3['基準']),
         makeItemCard('Debt/FCF', qDfc['評価'], fmtNum(qDfc['現在値'],2), fmt5Y((q['Debt/FCF_detail']||{})['5年変化'],2,''), 'debt_fcf'),
         makeItemCard('EV/FCF', qEvf['評価'], fmtNum(qEvf['現在値'],2), ''),
-        betaValV != null ? makeItemCard(t('Beta (β)'), betaGradeV, fmtNum(betaValV,2), t('beta-detail')) : '',
       ].filter(Boolean).join('');
 
       // ROIC / WACC
@@ -3354,14 +3351,15 @@
 
       // Breakdown node renderer (mirrors annual `node()`)
       const qBNode = (label, val, delta, unit='') => {
-        if (val == null) return '';
-        const clr = delta == null ? '#6b7280' : delta > 0 ? '#4ade80' : delta < 0 ? '#f87171' : '#6b7280';
-        const arrow = delta == null ? '' : delta > 0 ? '&#9650;' : delta < 0 ? '&#9660;' : '';
+        const clr   = delta == null ? '#6b7280' : delta > 0 ? '#4ade80' : delta < 0 ? '#f87171' : '#6b7280';
+        const arrow = delta == null ? '' : delta > 0 ? '&#9650;' : delta < 0 ? '&#9660;' : '&#9654;';
+        const valStr = val != null ? `${fmtNum(val,2)}${unit}` : '—';
+        const deltaStr = delta != null ? `<span class="text-[10px] font-semibold" style="color:${clr}">${arrow} ${fmtNum(Math.abs(delta),2)}${unit}</span>` : '';
         return `<div class="flex items-center justify-between p-2 th-bg-2 border mb-1" style="border-color:var(--border);border-radius:0">
           <span class="text-[10px] font-medium th-text-s">${label}</span>
           <div class="flex items-center gap-2 tabular-nums">
-            <span class="text-[11px] font-bold th-text">${fmtNum(val,2)}${unit}</span>
-            ${delta != null ? `<span class="text-[10px] font-semibold" style="color:${clr}">${arrow} ${fmtNum(Math.abs(delta),2)}</span>` : ''}
+            <span class="text-[11px] font-bold th-text">${valStr}</span>
+            ${deltaStr}
           </div></div>`;
       };
 

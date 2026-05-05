@@ -1530,14 +1530,18 @@ def parse_yfinance(ticker_symbol):
     q_income   = _extract_quarterly_aligned(qi_df, [
         'Total Revenue', 'Gross Profit', 'Operating Income',
         'Net Income', 'EBITDA', 'Diluted EPS',
+        'Selling General Administrative', 'Selling General And Administration',
+        'Pretax Income',
     ], _unified_cols)
     q_balance  = _extract_quarterly_aligned(qb_df, [
         'Total Assets', 'Stockholders Equity', 'Total Debt',
         'Current Assets', 'Current Liabilities', 'Cash And Cash Equivalents',
         'Ordinary Shares Number', 'Share Issued',
+        'Net PPE', 'Net Receivables', 'Accounts Receivable', 'Inventory',
     ], _unified_cols)
     q_cashflow = _extract_quarterly_aligned(qc_df, [
         'Operating Cash Flow', 'Free Cash Flow', 'Capital Expenditure',
+        'Investing Cash Flow', 'Financing Cash Flow',
     ], _unified_cols)
 
     # ── 米国株: SEC EDGAR 10-Q から四半期データを補完 ───────────────────────

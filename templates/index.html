@@ -3131,6 +3131,15 @@
       if (jpNotAvailEl) jpNotAvailEl.classList.add('hidden');
       Object.values(qCharts).forEach(c => c.destroy()); qCharts = {};
 
+      // 日本株ティッカー入力時は短期分析非対応（Excelアップロードは除く）
+      const isJPTicker = ts && ts._is_jpy && ts._source === 'yfinance';
+      if (isJPTicker) {
+        if (noDataEl) noDataEl.classList.add('hidden');
+        if (contentEl) contentEl.classList.add('hidden');
+        if (jpNotAvailEl) jpNotAvailEl.classList.remove('hidden');
+        return;
+      }
+
       if (!q || !q.dates || !q.dates.length) {
         if (noDataEl) noDataEl.classList.remove('hidden');
         if (contentEl) contentEl.classList.add('hidden');

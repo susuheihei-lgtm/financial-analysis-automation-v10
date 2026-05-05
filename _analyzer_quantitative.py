@@ -38,82 +38,107 @@ def analyze_quantitative(d, benchmark=None):
     cogs_5y = d.get("cogs_5y")
 
     # 売上高推移
-    if rev and len(rev) >= 4:
+    if rev and len(rev) >= 2:
+        N = min(len(rev), 5)
+        N_idx = N - 1
         latest_rev, rev_idx = get_latest_value(rev)
         data_warning = (rev_idx or 0) > 0
-
-        r5 = rate_change(latest_rev, rev[3]) if latest_rev else None
-        r3 = rate_change(latest_rev, rev[2]) if latest_rev else None
-        c3 = consecutive_increase([rev[0], rev[1], rev[2]])
-        c5 = consecutive_increase([rev[0], rev[1], rev[2], rev[3]])
-        if r5 is None:
+        rate = rate_change(latest_rev, rev[N_idx]) if (latest_rev is not None and rev[N_idx] is not None) else None
+        consec = consecutive_increase(rev[:N])
+        if rate is None:
             ev_rev = "×"
-        elif r5 >= 10 and c5:
+        elif rate >= 10 and consec:
             ev_rev = "◎"
-        elif r5 >= 5:
+        elif rate >= 5:
             ev_rev = "○"
-        elif r5 >= 0:
+        elif rate >= 0:
             ev_rev = "▲"
         else:
             ev_rev = "×"
         results["売上高推移"] = {
-            "最新値": latest_rev, "5年変化率": r5, "3年変化率": r3,
-            "3年連続増加": c3, "5年連続増加": c5, "評価": ev_rev,
+            "最新値": latest_rev, "5年変化率": rate, "_years": N,
+            "3年変化率": rate_change(latest_rev, rev[min(2, N_idx)]) if latest_rev is not None else None,
+            "3年連続増加": consecutive_increase(rev[:min(3, N)]),
+            "5年連続増加": consec,
+            "評価": ev_rev,
             "data_warning": data_warning,
         }
+    elif rev and len(rev) == 1:
+        latest_rev, _ = get_latest_value(rev)
+        results["売上高推移"] = {"最新値": latest_rev, "評価": "未入力", "欠損理由": "時系列データが1期分のみ（比較不可）"}
     else:
-        reason = "売上高データが4期分未満" if (rev and len(rev) < 4) else "売上高データなし"
-        results["売上高推移"] = {"評価": "未入力", "欠損理由": reason}
+        results["売上高推移"] = {"評価": "未入力", "欠損理由": "売上高データなし"}
 
     # FCF推移
-    if fcf and len(fcf) >= 4:
-        f5 = rate_change(fcf[0], fcf[3])
-        f3 = rate_change(fcf[0], fcf[2])
-        c3 = consecutive_increase([fcf[0], fcf[1], fcf[2]])
-        c5 = consecutive_increase([fcf[0], fcf[1], fcf[2], fcf[3]])
-        if f5 is None:
+    if fcf and len(fcf) >= 2:
+        N = min(len(fcf), 5)
+        N_idx = N - 1
+        f0 = fcf[0]
+        fN = fcf[N_idx]
+        rate = rate_change(f0, fN) if (f0 is not None and fN is not None) else None
+        consec = consecutive_increase(fcf[:N])
+        if rate is None:
             ev_fcf = "×"
-        elif f5 >= 10 and c5:
+        elif rate >= 10 and consec:
             ev_fcf = "◎"
-        elif f5 >= 5:
+        elif rate >= 5:
             ev_fcf = "○"
-        elif f5 >= 0:
+        elif rate >= 0:
             ev_fcf = "▲"
         else:
             ev_fcf = "×"
         results["FCF推移"] = {
-            "最新値": fcf[0], "5年変化率": f5, "3年変化率": f3,
-            "3年連続増加": c3, "5年連続増加": c5, "評価": ev_fcf,
+            "最新値": f0, "5年変化率": rate, "_years": N,
+            "3年変化率": rate_change(f0, fcf[min(2, N_idx)]) if f0 is not None else None,
+            "3年連続増加": consecutive_increase(fcf[:min(3, N)]),
+            "5年連続増加": consec,
+            "評価": ev_fcf,
         }
+    elif fcf and len(fcf) == 1:
+        results["FCF推移"] = {"最新値": fcf[0], "評価": "未入力", "欠損理由": "時系列データが1期分のみ（比較不可）"}
     else:
-        reason = "FCFデータが4期分未満" if (fcf and len(fcf) < 4) else "FCFデータなし"
-        results["FCF推移"] = {"評価": "未入力", "欠損理由": reason}
+        results["FCF推移"] = {"評価": "未入力", "欠損理由": "FCFデータなし"}
 
     # EPS推移
-    if eps and len(eps) >= 4 and eps[0] is not None and eps[3] is not None:
-        e0, e3_val = eps[0], eps[3]
-        e3_rate = rate_change(eps[0], eps[2])
-        c3 = consecutive_increase([eps[0], eps[1], eps[2]])
-        c5 = consecutive_increase([eps[0], eps[1], eps[2], eps[3]])
-        if e3_val > 0 and e0 > 0:
-            e5 = rate_change(e0, e3_val)
-            ev_eps = "◎" if (e5 is not None and e5 >= 10 and c5) else ("○" if (e5 is not None and e5 >= 5) else ("▲" if (e5 is not None and e5 >= 0) else "×"))
-        elif e3_val < 0 and e0 > 0:
-            e5 = None  # 赤字→黒字転換: CAGR不定
-            ev_eps = "○"  # 黒字転換はポジティブ評価
-        elif e3_val < 0 and e0 < 0:
-            e5 = None
-            ev_eps = "▲" if abs(e0) < abs(e3_val) else "×"
+    if eps and len(eps) >= 2 and eps[0] is not None:
+        N = min(len(eps), 5)
+        N_idx = N - 1
+        # Find deepest valid comparison point
+        while N_idx > 0 and eps[N_idx] is None:
+            N_idx -= 1
+        if N_idx == 0:
+            # No valid base → only current
+            results["EPS推移"] = {"最新値": eps[0], "評価": "未入力", "欠損理由": "時系列データが1期分のみ（比較不可）"}
         else:
-            e5 = None
-            ev_eps = "×"  # 黒字→赤字転落
-        results["EPS推移"] = {
-            "最新値": e0, "5年変化率": e5, "3年変化率": e3_rate,
-            "3年連続増加": c3, "5年連続増加": c5, "評価": ev_eps,
-        }
+            e0 = eps[0]
+            e_base = eps[N_idx]
+            N = N_idx + 1
+            consec = consecutive_increase(eps[:N])
+            if e_base > 0 and e0 > 0:
+                rate = rate_change(e0, e_base)
+                ev_eps = ("◎" if (rate is not None and rate >= 10 and consec) else
+                          ("○" if (rate is not None and rate >= 5) else
+                           ("▲" if (rate is not None and rate >= 0) else "×")))
+            elif e_base < 0 and e0 > 0:
+                rate = None
+                ev_eps = "○"
+            elif e_base < 0 and e0 < 0:
+                rate = None
+                ev_eps = "▲" if abs(e0) < abs(e_base) else "×"
+            else:
+                rate = None
+                ev_eps = "×"
+            results["EPS推移"] = {
+                "最新値": e0, "5年変化率": rate, "_years": N,
+                "3年変化率": rate_change(e0, eps[min(2, N_idx)]) if (e0 is not None and N_idx >= 2) else None,
+                "3年連続増加": consecutive_increase(eps[:min(3, N)]),
+                "5年連続増加": consec,
+                "評価": ev_eps,
+            }
+    elif eps and len(eps) == 1 and eps[0] is not None:
+        results["EPS推移"] = {"最新値": eps[0], "評価": "未入力", "欠損理由": "時系列データが1期分のみ（比較不可）"}
     else:
-        reason = "EPSデータが4期分未満" if (eps and len(eps) < 4) else "EPSデータなし"
-        results["EPS推移"] = {"評価": "未入力", "欠損理由": reason}
+        results["EPS推移"] = {"評価": "未入力", "欠損理由": "EPSデータなし"}
 
     # Debt/FCF
     if debt_fcf is not None:
@@ -259,8 +284,10 @@ def analyze_quantitative(d, benchmark=None):
         latest_cf = op_cf[0]
         ev_cf = "○" if latest_cf and latest_cf > 0 else "×"
         cf_result = {"最新値": latest_cf, "評価": ev_cf}
-        if len(op_cf) >= 4:
-            cf_result["5年変化率"] = rate_change(op_cf[0], op_cf[3])
+        if len(op_cf) >= 2:
+            _N_cf = min(len(op_cf), 5)
+            cf_result["5年変化率"] = rate_change(op_cf[0], op_cf[_N_cf - 1]) if op_cf[_N_cf - 1] is not None else None
+            cf_result["_years"] = _N_cf
         results["営業CF"] = cf_result
     else:
         results["営業CF"] = {"評価": "未入力"}
@@ -271,8 +298,11 @@ def analyze_quantitative(d, benchmark=None):
         latest_inv = inv_cf[0]
         ev_inv = "○" if latest_inv is not None and latest_inv < 0 else "▲"
         inv_result = {"最新値": latest_inv, "評価": ev_inv}
-        if len(inv_cf) >= 4:
-            inv_result["5年変化率"] = rate_change(abs(inv_cf[0]) if inv_cf[0] else None, abs(inv_cf[3]) if inv_cf[3] else None)
+        if len(inv_cf) >= 2:
+            _N_iv = min(len(inv_cf), 5)
+            _inv_base = inv_cf[_N_iv - 1]
+            inv_result["5年変化率"] = rate_change(abs(inv_cf[0]) if inv_cf[0] else None, abs(_inv_base) if _inv_base else None)
+            inv_result["_years"] = _N_iv
         results["投資CF"] = inv_result
     else:
         results["投資CF"] = {"評価": "未入力"}
@@ -283,8 +313,11 @@ def analyze_quantitative(d, benchmark=None):
         latest_fin = fin_cf[0]
         ev_fin = "○" if latest_fin is not None and latest_fin < 0 else "▲"
         fin_result = {"最新値": latest_fin, "評価": ev_fin}
-        if len(fin_cf) >= 4:
-            fin_result["5年変化率"] = rate_change(abs(fin_cf[0]) if fin_cf[0] else None, abs(fin_cf[3]) if fin_cf[3] else None)
+        if len(fin_cf) >= 2:
+            _N_fn = min(len(fin_cf), 5)
+            _fin_base = fin_cf[_N_fn - 1]
+            fin_result["5年変化率"] = rate_change(abs(fin_cf[0]) if fin_cf[0] else None, abs(_fin_base) if _fin_base else None)
+            fin_result["_years"] = _N_fn
         results["財務CF"] = fin_result
     else:
         results["財務CF"] = {"評価": "未入力"}

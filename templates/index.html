@@ -1798,6 +1798,13 @@
       if (val !== undefined && val !== null && !isNaN(val)) return `5Y: ${fmtNum(val, decimals)}${unit}`;
       return '';  // データがない場合は空文字を返す
     }
+    const fmtNYChg = (q, d, u) => {
+      const v = (q || {})['5年変化率'];
+      if (v == null) return '';
+      const N = (q || {})['_years'] || 5;
+      const prefix = N < 5 ? N + (currentLang === 'ja' ? '年: ' : 'Y: ') : '';
+      return prefix + fmt5Y(v, d, u);
+    };
 
     // 指標情報マップ（計算式・評価基準を二言語で定義）
     const metricInfoMap = {
@@ -2223,8 +2230,8 @@
       const b1 = s['B-1_売上高CAGR']||{}, b2 = s['B-2_EBITDAマージン']||{}, b3 = s['B-3_営業利益率']||{}, b4 = s['B-4_EPS成長率']||{};
       const qRev = q['売上高推移']||{}, qFcf = q['FCF推移']||{}, qEps = q['EPS推移']||{};
       $('growthItems').innerHTML = [
-        makeItemCard(t('売上高推移'), qRev['評価'], qRev['最新値']!==undefined?(qRev['data_warning']?'⚠️ ':'')+smartFormat(qRev['最新値']):'', fmt5Y(qRev['5年変化率'],1,'%'), 'revenue', b1['基準'], qRev['欠損理由']),
-        makeItemCard(t('EPS推移'), qEps['評価'], qEps['最新値']!==undefined?currentCurrencySymbol+fmtNum(qEps['最新値'],1):'', fmt5Y(qEps['5年変化率'],1,'%'), 'eps', b4['基準'], qEps['欠損理由']),
+        makeItemCard(t('売上高推移'), qRev['評価'], qRev['最新値']!==undefined?(qRev['data_warning']?'⚠️ ':'')+smartFormat(qRev['最新値']):'', fmtNYChg(qRev,1,'%'), 'revenue', b1['基準'], qRev['欠損理由']),
+        makeItemCard(t('EPS推移'), qEps['評価'], qEps['最新値']!==undefined?currentCurrencySymbol+fmtNum(qEps['最新値'],1):'', fmtNYChg(qEps,1,'%'), 'eps', b4['基準'], qEps['欠損理由']),
         makeItemCard(t('EBITDA Margin'), b2['判定'] || '未入力', b2['実績値'] != null ? fmtNum(b2['実績値'],1,'%') : '—', fmt5Y((q['EBITDAマージン']||{})['5年変化pt'],1,'pt'), 'ebitda', b2['基準'], b2['実績値'] == null ? (currentLang==='ja'?'EBITDAデータ未取得':'EBITDA data unavailable') : undefined),
         makeItemCard(t('営業利益率'), b3['判定'], typeof b3['状況']==='number'?(b3['data_warning']?'⚠️ ':'')+fmtNum(b3['状況'],1,'%'):(typeof b3['状況']==='string'?t(b3['状況']):'—'), fmt5Y((q['営業利益率Q']||{})['5年変化pt'],1,'pt'), 'op_margin', b3['基準']),
       ].join('');
@@ -2264,10 +2271,10 @@
       const patIcon = cfPat['理想型'] ? '◎' : '⚠';
       const patColor = cfPat['理想型'] ? '#4ade80' : '#fbbf24';
       $('cfItems').innerHTML = [
-        makeItemCard(t('営業CF推移'), qCf['評価']||cfItem['判定'], qCf['最新値']!==undefined?smartFormat(qCf['最新値']):(cfItem['状況']||'—'), fmt5Y(qCf['5年変化率'],1,'%'), 'ocf', cfItem['基準']),
-        makeItemCard(t('投資CF推移'), qInv['評価'], qInv['最新値']!==undefined?smartFormat(qInv['最新値']):'', fmt5Y(qInv['5年変化率'],1,'%'), 'investing_cf'),
-        makeItemCard(t('財務CF推移'), qFin['評価'], qFin['最新値']!==undefined?smartFormat(qFin['最新値']):'', fmt5Y(qFin['5年変化率'],1,'%'), 'financing_cf'),
-        makeItemCard(t('FCF推移'), qFcf['評価'], qFcf['最新値']!==undefined?smartFormat(qFcf['最新値']):'', fmt5Y(qFcf['5年変化率'],1,'%'), 'fcf', undefined, qFcf['欠損理由']),
+        makeItemCard(t('営業CF推移'), qCf['評価']||cfItem['判定'], qCf['最新値']!==undefined?smartFormat(qCf['最新値']):(cfItem['状況']||'—'), fmtNYChg(qCf,1,'%'), 'ocf', cfItem['基準']),
+        makeItemCard(t('投資CF推移'), qInv['評価'], qInv['最新値']!==undefined?smartFormat(qInv['最新値']):'', fmtNYChg(qInv,1,'%'), 'investing_cf'),
+        makeItemCard(t('財務CF推移'), qFin['評価'], qFin['最新値']!==undefined?smartFormat(qFin['最新値']):'', fmtNYChg(qFin,1,'%'), 'financing_cf'),
+        makeItemCard(t('FCF推移'), qFcf['評価'], qFcf['最新値']!==undefined?smartFormat(qFcf['最新値']):'', fmtNYChg(qFcf,1,'%'), 'fcf', undefined, qFcf['欠損理由']),
         `<div class="flex items-center justify-between p-4 th-bg-1 border mt-3" style="border-color:var(--border);border-radius:0">
           <div class="flex items-center gap-3">
             <span class="text-lg" style="color:${patColor}">${patIcon}</span>

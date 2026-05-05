@@ -405,6 +405,7 @@ def compute_pbr_contribution(roe_tree, screening, data, benchmark=None):
     else:
         pbr_eval = "データなし"
 
+    _lookback_years = data.get('_lookback_years', 5)
     return {
         "up_ranking": build_list(up_ranked),
         "down_ranking": build_list(down_ranked),
@@ -418,4 +419,5 @@ def compute_pbr_contribution(roe_tree, screening, data, benchmark=None):
         "roe_5y_change": roe_chg,
         "pbr_eval": pbr_eval,
         "pbr_range": f"{pbr_lo}～{pbr_hi}x",
+        "lookback_years": _lookback_years,
     }

@@ -1181,7 +1181,7 @@
       // Currency
       '円': { ja: '円', en: 'JPY' },
       // Warning messages
-      'PBR貢献度分析データ不足': { ja: 'PBR, PER, ROEの5年間データが不足しているため、貢献度分析を実施できません', en: 'Insufficient 5-year data for PBR, PER, ROE to perform contribution analysis' },
+      'PBR貢献度分析データ不足': { ja: 'PBR, PERの時系列データが不足しているため、貢献度分析を実施できません', en: 'Insufficient historical data for PBR/PER to perform contribution analysis' },
       'ROA Tree':    { ja: 'ROAツリー', en: 'ROA Tree' },
       'Time Series': { ja: '時系列', en: 'Time Series' },
       // Custom tab
@@ -2338,6 +2338,8 @@
 
     function buildPBRContribution() {
       const pbr = lastData ? lastData.pbr_contribution : null;
+      const N = pbr ? (pbr.lookback_years || 5) : 5;
+      const nyrStr = N + (currentLang === 'ja' ? '年' : 'Y');
 
       // データが不足していても、セクション自体は常に表示する
       const upItems = pbr ? (pbr.up_ranking || []) : [];
@@ -2400,14 +2402,14 @@
 
       // PBR 5Y change summary
       const pbrChgVal = pbr ? pbr.pbr_change : null;
-      const pbrChgText = pbrChgVal !== null ? `PBR ${t('5Y Change:')} ${pbrChgVal > 0 ? '+' : ''}${fmtNum(pbrChgVal,2)}x` : t('PBR変化：データ不足');
+      const pbrChgText = pbrChgVal !== null ? `PBR ${nyrStr} Change: ${pbrChgVal > 0 ? '+' : ''}${fmtNum(pbrChgVal,2)}x` : t('PBR変化：データ不足');
 
       return `
         <div class="mt-12 pt-8 border-t" style="border-color:var(--border)">
           <div class="text-center mb-6">
             <p class="v0-section-label mb-2">${t('PBR Driver Analysis')}</p>
             <p class="text-lg font-bold th-text mb-1">${pbrChgText}</p>
-            <p class="text-xs th-text-m">PBR = ROE × PER / 100 — ${t('5年間の各要因がPBRに与えた影響を分解')}</p>
+            <p class="text-xs th-text-m">PBR = ROE × PER / 100 — ${nyrStr}${currentLang==='ja'?'間の各要因がPBRに与えた影響を分解':' factor contribution to PBR change'}</p>
             ${pbrEvalBadge}
           </div>
 
@@ -2467,6 +2469,8 @@
       const pbrC = lastData ? lastData.pbr_contribution : {};
       const perChg = pbrC.per_change;
       const pbrChg = pbrC.pbr_change;
+      const _pbrN = pbrC.lookback_years || 5;
+      const _nyrLbl = `${_pbrN}${currentLang==='ja'?'年':'Y'} Change:`;
 
       $('roeTree').innerHTML = `
         <!-- ===== PBR = ROE × PER (top level) ===== -->
@@ -2482,7 +2486,7 @@
             <p class="text-[10px] uppercase tracking-[0.2em] th-text-m mb-1" style="font-family:'IBM Plex Mono','Courier New',monospace">PBR</p>
             <p class="text-5xl font-bold tabular-nums" style="color:var(--brand);font-family:'IBM Plex Mono','Courier New',monospace">${fmtNum(pbrVal,2)}<span class="text-2xl th-text-m">x</span></p>
             <p class="text-xs mt-2">${(()=>{const _j=pbrData['判定'];const _l=_j==='◎'?t('割安'):_j==='○'?t('適正水準'):_j==='▲'?t('やや割高'):_j==='×'?t('割高'):null;return _l?`<span style="color:${gradeColor(_j)}">${_l}</span>`:'<span class="th-text-m">—</span>';})()}</p>
-            <p class="text-[11px] th-text-m mt-1">${t('5Y Change:')} <span class="${pbrChg>0?'text-green-400':pbrChg<0?'text-red-400':'th-text-m'}">${pbrChg!==null?((pbrChg>0?'+':'')+fmtNum(pbrChg,2)+'x'):'—'}</span></p>
+            <p class="text-[11px] th-text-m mt-1">${_nyrLbl} <span class="${pbrChg>0?'text-green-400':pbrChg<0?'text-red-400':'th-text-m'}">${pbrChg!==null?((pbrChg>0?'+':'')+fmtNum(pbrChg,2)+'x'):'—'}</span></p>
             ${benchBadge('pbr', null, 'x')}
           </div>`}
         </div>
@@ -2513,7 +2517,7 @@
             </div>
             <p class="text-[10px] th-text-m mb-2">${t('per-desc')}</p>
             <div class="mb-2">${benchBadge('pe_aggregate_all', null, 'x')}</div>
-            <p class="text-[11px] th-text-m mb-3">${t('5Y Change:')} <span class="${perChg>0?'text-green-400':perChg<0?'text-red-400':'th-text-m'}">${perChg!==null?((perChg>0?'+':'')+fmtNum(perChg,1)+'x'):'—'}</span></p>
+            <p class="text-[11px] th-text-m mb-3">${_nyrLbl} <span class="${perChg>0?'text-green-400':perChg<0?'text-red-400':'th-text-m'}">${perChg!==null?((perChg>0?'+':'')+fmtNum(perChg,1)+'x'):'—'}</span></p>
             <div id="perChartContainer">
               <canvas id="roetreePERChart" style="max-height:140px"></canvas>
             </div>
@@ -2531,7 +2535,7 @@
             </div>
             <p class="text-[10px] th-text-m mb-1">${t('roe-desc')}</p>
             <div class="mb-1">${benchBadge(benchmarkRegion === 'japan' ? 'roe_japan' : 'roe_global', 100, '%')}</div>
-            <p class="text-[11px] th-text-m mb-3">${t('5Y Change:')} ${fmtNum(roe['5年変化pt'],1,'pt')}</p>
+            <p class="text-[11px] th-text-m mb-3">${_nyrLbl} ${fmtNum(roe['5年変化pt'],1,'pt')}</p>
             <div id="roeChartContainer">
               <canvas id="roetreeROEChart" style="max-height:140px"></canvas>
             </div>
@@ -2557,7 +2561,7 @@
             <p class="text-2xl font-bold tabular-nums mb-1" style="font-family:'IBM Plex Mono','Courier New',monospace">${fmtNum(npm['現在値'],1)}<span class="text-sm th-text-m">%</span></p>
             <p class="text-[10px] th-text-m mb-1">${t('Net Margin')} = ${t('Net Income')} / ${t('Revenue')}</p>
             ${benchBadge('net_margin', 100, '%')}
-            <p class="text-[11px] th-text-m mb-3">${t('5Y Change:')} ${fmtNum(npm['5年変化pt'],1,'pt')}</p>
+            <p class="text-[11px] th-text-m mb-3">${_nyrLbl} ${fmtNum(npm['5年変化pt'],1,'pt')}</p>
             <canvas id="dupontNPMChart" style="max-height:120px"></canvas>
             <div class="mt-4 ml-2 pl-3 border-l border-blue-500/20">
               <p class="text-[10px] th-text-m mb-2">&#9492; ${t('breakdown-npm')}</p>
@@ -2577,7 +2581,7 @@
             <div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 bg-brand" style="border-radius:0"></div><span class="text-[10px] font-bold uppercase tracking-[0.18em] th-text-m" style="font-family:'IBM Plex Mono','Courier New',monospace">${t('Asset Turnover')}</span></div>
             <p class="text-2xl font-bold tabular-nums mb-1" style="font-family:'IBM Plex Mono','Courier New',monospace">${fmtNum(at['現在値'],2)}<span class="text-sm th-text-m">x</span></p>
             <p class="text-[10px] th-text-m mb-1">${t('Asset Turnover')} = ${t('Revenue')} / ${t('Total Assets')}</p>
-            <p class="text-[11px] th-text-m mb-3">${t('5Y Change:')} ${fmtNum(at['5年変化'],2)}</p>
+            <p class="text-[11px] th-text-m mb-3">${_nyrLbl} ${fmtNum(at['5年変化'],2)}</p>
             <canvas id="dupontATChart" style="max-height:120px"></canvas>
             <div class="mt-4 ml-2 pl-3 border-l border-brand/20">
               <p class="text-[10px] th-text-m mb-2">&#9492; ${t('breakdown-at')}</p>
@@ -2593,7 +2597,7 @@
             <div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 bg-brand" style="border-radius:0"></div><span class="text-[10px] font-bold uppercase tracking-[0.18em] th-text-m" style="font-family:'IBM Plex Mono','Courier New',monospace">${t('Financial Leverage')}</span></div>
             <p class="text-2xl font-bold tabular-nums mb-1" style="font-family:'IBM Plex Mono','Courier New',monospace">${fmtNum(em['現在値'],2)}<span class="text-sm th-text-m">x</span></p>
             <p class="text-[10px] th-text-m mb-1">${t('Leverage')} = ${t('Total Assets')} / ${t('Equity')}</p>
-            <p class="text-[11px] th-text-m mb-3">${t('5Y Change:')} ${fmtNum(em['5年変化'],2)}</p>
+            <p class="text-[11px] th-text-m mb-3">${_nyrLbl} ${fmtNum(em['5年変化'],2)}</p>
             <canvas id="dupontLEVChart" style="max-height:120px"></canvas>
             <div class="mt-4 ml-2 pl-3 border-l border-amber-500/20">
               <p class="text-[10px] th-text-m mb-2">&#9492; ${t('breakdown-lev')}</p>

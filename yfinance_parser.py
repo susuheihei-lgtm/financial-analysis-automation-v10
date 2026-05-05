@@ -1161,8 +1161,47 @@ def parse_yfinance(ticker_symbol):
         else:
             pbr_ts.append(None)
 
-    per_5y_val = per_ts[i5] if i5 < len(per_ts) else None
-    pbr_5y_val = pbr_ts[i5] if i5 < len(pbr_ts) else None
+    # ── 実効ルックバック: per_ts と pbr_ts が両方揃う最も古い年 ───────────────
+    def _avail_idx(series, max_i):
+        for _i in range(max_i, -1, -1):
+            if _i < len(series) and series[_i] is not None:
+                return _i
+        return 0
+    per_avail_i = _avail_idx(per_ts, i5)
+    pbr_avail_i = _avail_idx(pbr_ts, i5)
+    i_eff = min(per_avail_i, pbr_avail_i)
+    _lookback_years = i_eff + 1  # 例: i_eff=4 → 5年, i_eff=2 → 3年
+
+    per_5y_val = per_ts[i_eff] if i_eff < len(per_ts) else None
+    pbr_5y_val = pbr_ts[i_eff] if i_eff < len(pbr_ts) else None
+
+    # i_eff で _5y 系ローカル変数を再計算 (i5 と異なる場合のみ)
+    if i_eff != i5 and n > 0:
+        eq4 = g('total_equity', i_eff)
+        ta4 = g('total_assets', i_eff)
+        equity_ratio_5y = (eq4 / ta4) * 100 if (eq4 and ta4 and ta4 != 0) else None
+        ca4 = g('current_assets', i_eff)
+        cl4 = g('current_liab', i_eff)
+        inv4 = g('inventory', i_eff)
+        current_r_5y = (ca4 / cl4) * 100 if (ca4 and cl4 and cl4 != 0) else None
+        quick_r_5y = ((ca4 - (inv4 or 0)) / cl4) * 100 if (ca4 and cl4 and cl4 != 0) else None
+        ebitda_margin_5y = to_pct(ebitda_margin_list[i_eff]) if (ebitda_margin_list and i_eff < len(ebitda_margin_list)) else None
+        sga_ratio_5y = None
+        if g('sga', i_eff) and g('revenue', i_eff):
+            sga_ratio_5y = (g('sga', i_eff) / g('revenue', i_eff)) * 100
+        debt_fcf_5y = None
+        if g('total_debt', i_eff) is not None and g('fcf', i_eff) and g('fcf', i_eff) != 0:
+            debt_fcf_5y = g('total_debt', i_eff) / g('fcf', i_eff)
+        tax_rate_5y = eff_tax_rates[i_eff] if i_eff < len(eff_tax_rates) else 0.25
+        nopat_5y = g('op_income', i_eff) * (1 - tax_rate_5y) if g('op_income', i_eff) else None
+        ic_5y = g('invested_capital', i_eff)
+        if ic_5y is None:
+            _eq_e = g('total_equity', i_eff)
+            _dt_e = g('total_debt', i_eff)
+            _ca_e = g('cash', i_eff)
+            if _eq_e is not None and _dt_e is not None and _ca_e is not None:
+                ic_5y = _eq_e + _dt_e - _ca_e
+
     # 現在のPER/PBRはinfoの値を優先、なければ計算値
     per_now = per if per is not None else (per_ts[0] if per_ts else None)
     pbr_now = pbr if pbr is not None else (pbr_ts[0] if pbr_ts else None)
@@ -1220,6 +1259,7 @@ def parse_yfinance(ticker_symbol):
         "per_5y": per_5y_val,
         "pbr": pbr_now,
         "pbr_5y": pbr_5y_val,
+        "_lookback_years": _lookback_years,
 
         "nopat": nopat,
         "nopat_5y": nopat_5y,
@@ -1228,39 +1268,39 @@ def parse_yfinance(ticker_symbol):
         "wacc": wacc_val,
 
         "accounts_receivable": g('receivables', 0),
-        "accounts_receivable_5y": g('receivables', i5) if n > 0 else None,
+        "accounts_receivable_5y": g('receivables', i_eff) if n > 0 else None,
         "inventory": g('inventory', 0),
-        "inventory_5y": g('inventory', i5) if n > 0 else None,
+        "inventory_5y": g('inventory', i_eff) if n > 0 else None,
         "accounts_payable": g('payables', 0),
-        "accounts_payable_5y": g('payables', i5) if n > 0 else None,
+        "accounts_payable_5y": g('payables', i_eff) if n > 0 else None,
         "cogs": g('cogs', 0),
-        "cogs_5y": g('cogs', i5) if n > 0 else None,
+        "cogs_5y": g('cogs', i_eff) if n > 0 else None,
         "sga_ratio": sga_ratio,
         "sga_ratio_5y": sga_ratio_5y,
 
         "total_assets": g('total_assets', 0),
-        "total_assets_5y": g('total_assets', i5) if n > 0 else None,
+        "total_assets_5y": g('total_assets', i_eff) if n > 0 else None,
         "fixed_assets": g('fixed_assets', 0),
-        "fixed_assets_5y": g('fixed_assets', i5) if n > 0 else None,
+        "fixed_assets_5y": g('fixed_assets', i_eff) if n > 0 else None,
         "tangible_fixed_assets": g('fixed_assets', 0),
-        "tangible_fixed_assets_5y": g('fixed_assets', i5) if n > 0 else None,
+        "tangible_fixed_assets_5y": g('fixed_assets', i_eff) if n > 0 else None,
         "intangible_fixed_assets": g('intangibles', 0),
-        "intangible_fixed_assets_5y": g('intangibles', i5) if n > 0 else None,
+        "intangible_fixed_assets_5y": g('intangibles', i_eff) if n > 0 else None,
 
         "net_income_val": g('net_income', 0),
-        "net_income_val_5y": g('net_income', i5) if n > 0 else None,
+        "net_income_val_5y": g('net_income', i_eff) if n > 0 else None,
         "op_income_val": g('op_income', 0),
-        "op_income_val_5y": g('op_income', i5) if n > 0 else None,
+        "op_income_val_5y": g('op_income', i_eff) if n > 0 else None,
         "interest_exp": g('interest_exp', 0),
-        "interest_exp_5y": g('interest_exp', i5) if n > 0 else None,
+        "interest_exp_5y": g('interest_exp', i_eff) if n > 0 else None,
         "other_exp": g('other_exp', 0),
-        "other_exp_5y": g('other_exp', i5) if n > 0 else None,
+        "other_exp_5y": g('other_exp', i_eff) if n > 0 else None,
         "pretax_income": g('pretax_income', 0),
-        "pretax_income_5y": g('pretax_income', i5) if n > 0 else None,
+        "pretax_income_5y": g('pretax_income', i_eff) if n > 0 else None,
         "income_tax": g('income_tax', 0),
-        "income_tax_5y": g('income_tax', i5) if n > 0 else None,
+        "income_tax_5y": g('income_tax', i_eff) if n > 0 else None,
         "total_equity": g('total_equity', 0),
-        "total_equity_5y": g('total_equity', i5) if n > 0 else None,
+        "total_equity_5y": g('total_equity', i_eff) if n > 0 else None,
 
         "dividend_yield": dividend_yield_pct,
         "dividend_yield_5y": dividend_yield_5y,

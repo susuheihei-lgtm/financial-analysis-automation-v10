@@ -868,6 +868,10 @@
             <p class="font-plex-mono text-[10px] th-text-m opacity-60" data-i18n="JP short-term reason">IR BANKの四半期データは欠損・遅延が多く、信頼性が低いため。</p>
           </div>
           <div id="quarterlyChartContent" class="hidden">
+            <!-- Excel年次データ表示時の注記 -->
+            <div id="quarterlyAnnualNote" class="hidden mb-4 px-4 py-3 text-[10px]" style="border-left:2px solid var(--accent-v0);font-family:'IBM Plex Mono','Courier New',monospace;color:var(--accent-v0);background:rgba(212,133,42,0.07)">
+              <span data-i18n="excel annual note">※ Excelデータのため、四半期ではなく年次データを表示しています。</span>
+            </div>
             <!-- Q inner sub-tabs -->
             <div class="mb-6 tab-nav-wrap">
               <nav class="flex gap-0 border-b overflow-x-auto scrollbar-hide" id="qInnerTabNav" style="border-color:var(--border-s)">
@@ -1387,6 +1391,7 @@
       'Q no data msg':                { ja: '四半期データはティッカー取得時のみ利用可能です。', en: 'Quarterly data is only available for ticker-based analysis.' },
       'JP short-term not available':  { ja: '日本株の短期財務分析は現在提供していません。', en: 'Short-term analysis is not available for Japanese stocks.' },
       'JP short-term reason':         { ja: 'IR BANKの四半期データは欠損・遅延が多く、信頼性が低いため。', en: 'IR BANK quarterly data has frequent gaps and delays, making it unreliable.' },
+      'excel annual note':            { ja: '※ Excelデータのため、四半期ではなく年次データを表示しています。', en: '※ Showing annual data from Excel (not quarterly periods).' },
       // Select Metrics in Time Series
       'Select Metrics (TS)':  { ja: '指標を選択', en: 'Select Metrics' },
       'Show All':             { ja: '全指標を表示', en: 'Show All' },
@@ -3133,6 +3138,12 @@
       }
       if (noDataEl) noDataEl.classList.add('hidden');
       if (contentEl) contentEl.classList.remove('hidden');
+
+      const annualNoteEl = $('quarterlyAnnualNote');
+      if (annualNoteEl) {
+        if (q._source === 'excel_annual') annualNoteEl.classList.remove('hidden');
+        else annualNoteEl.classList.add('hidden');
+      }
 
       let dates = q.dates.slice(0, 8).reverse().map(d => d.slice(0, 7));
       const rev = arr => Array.isArray(arr) ? arr.slice(0, 8).reverse() : [];

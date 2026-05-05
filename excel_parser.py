@@ -470,6 +470,19 @@ METRIC_SYNONYMS = {
         'anti_keywords': [],
         'value_type': 'percentage',
     },
+    'gross_profit': {
+        'exact': ['Gross Profit', '売上総利益', '粗利益'],
+        'keywords': ['gross profit', '売上総利益', '粗利'],
+        'anti_keywords': ['margin', 'growth'],
+        'value_type': 'large_number',
+    },
+    'shares_outstanding': {
+        'exact': ['Shares Outstanding (Diluted)', 'Shares Outstanding (Basic)',
+                  'Shares Outstanding', '発行済株式数'],
+        'keywords': ['shares outstanding', '発行済株式'],
+        'anti_keywords': ['change', 'growth', 'per share'],
+        'value_type': 'large_number',
+    },
 }
 
 # ファジーマッチ閾値
@@ -1112,13 +1125,236 @@ def _parse_japanese_vertical(wb, currency='JPY'):
     ts_data["nonop_burden"] = []
     ts_data["tax_burden"] = []
 
+    # op_income series（四半期タブ用）
+    ts_data["op_income"] = list(op_income)
+
     # Metadata for frontend scaling
     ts_data["_source"] = "excel"
     ts_data["_unit_scale"] = "millions"  # Data is already in millions
     ts_data["_is_jpy"] = False  # Prevent double-scaling in smartFormat
     ts_data["_currency"] = currency
 
+    # 四半期シートがあればそちらを優先、なければ年次2件でフォールバック
+    _q = _parse_quarterly_excel(wb, currency=currency)
+    ts_data["quarterly"] = _q if _q is not None else _build_quarterly_from_annual(ts_data, currency=currency)
+
     return data, ts_data
+
+
+# ---------- Excelから四半期シート直接パース ----------
+
+_MAX_Q = 8  # 最新8四半期（2年分）
+
+
+def _parse_quarterly_excel(wb, currency='JPY'):
+    """ExcelのQuarterlyシートから四半期データを生成する（最新8四半期）。
+    四半期シートが存在しない場合は None を返す。"""
+    q_inc = _find_sheet(wb, [
+        'Income-Quarterly', 'Quarterly Income', 'Q Income',
+        '四半期損益', '四半期PL', '四半期損益計算書',
+    ])
+    q_bs = _find_sheet(wb, [
+        'Balance-Sheet-Quarterly', 'Quarterly Balance', 'Q Balance',
+        '四半期BS', '四半期貸借対照表',
+    ])
+    q_cf = _find_sheet(wb, [
+        'Cash-Flow-Quarterly', 'Quarterly Cash Flow', 'Q Cash Flow',
+        '四半期CF', '四半期キャッシュフロー',
+    ])
+    q_rat = _find_sheet(wb, [
+        'Ratios-Quarterly', 'Quarterly Ratios', 'Q Ratios',
+    ])
+
+    if not any([q_inc, q_bs, q_cf]):
+        return None
+
+    inc_metrics = _fuzzy_find_all_metrics(q_inc, [
+        'dates', 'revenue', 'cogs', 'gross_profit', 'op_income',
+        'net_income', 'ebitda', 'eps', 'sga', 'pretax_income', 'income_tax',
+    ]) if q_inc else {}
+    bs_metrics = _fuzzy_find_all_metrics(q_bs, [
+        'dates', 'total_assets', 'total_equity', 'total_debt',
+        'current_assets', 'current_liab', 'cash', 'receivables', 'inventory',
+        'shares_outstanding', 'net_debt', 'fixed_assets',
+    ]) if q_bs else {}
+    cf_metrics = _fuzzy_find_all_metrics(q_cf, [
+        'dates', 'ocf', 'fcf', 'capex', 'investing_cf', 'financing_cf',
+    ]) if q_cf else {}
+    rat_metrics = _fuzzy_find_all_metrics(q_rat, [
+        'dates', 'pe_ratio', 'pb_ratio', 'roe', 'roa', 'roic',
+        'current_ratio', 'quick_ratio',
+    ]) if q_rat else {}
+
+    def fm(d, key):
+        """最新_MAX_Q件を返す（newest-first）"""
+        if not d:
+            return []
+        return d.get(key, ([], None, 0.0))[0][:_MAX_Q]
+
+    # 日付: income → bs → cf の順で取得
+    dates_raw = fm(inc_metrics, 'dates') or fm(bs_metrics, 'dates') or fm(cf_metrics, 'dates')
+    if not dates_raw:
+        return None
+
+    def to_iso(d):
+        s = str(d).strip() if d else ''
+        if re.match(r'\d{4}-\d{2}-\d{2}', s):
+            return s[:10]
+        if re.match(r'\d{4}-\d{2}', s):
+            return s[:7] + '-28'
+        if re.match(r'\d{4}$', s):
+            return s + '-12-31'
+        return s
+
+    iso_dates = [to_iso(d) for d in dates_raw]
+
+    revenue     = fm(inc_metrics, 'revenue')
+    op_inc      = fm(inc_metrics, 'op_income')
+    net_inc     = fm(inc_metrics, 'net_income')
+    ebitda      = fm(inc_metrics, 'ebitda')
+    eps         = fm(inc_metrics, 'eps')
+    gross_p     = fm(inc_metrics, 'gross_profit')
+    cogs_ts     = fm(inc_metrics, 'cogs')
+
+    # gross_profit が直接なければ revenue - cogs で計算
+    if not any(v is not None for v in gross_p) and revenue and cogs_ts:
+        gross_p = [
+            (revenue[i] - cogs_ts[i])
+            if (i < len(revenue) and i < len(cogs_ts)
+                and revenue[i] is not None and cogs_ts[i] is not None)
+            else None
+            for i in range(min(len(revenue), len(cogs_ts)))
+        ]
+
+    income = {
+        'Total Revenue':    revenue,
+        'Net Income':       net_inc,
+        'Operating Income': op_inc,
+        'EBITDA':           ebitda,
+        'Diluted EPS':      eps,
+        'Gross Profit':     gross_p,
+    }
+
+    balance = {
+        'Total Assets':              fm(bs_metrics, 'total_assets'),
+        'Stockholders Equity':       fm(bs_metrics, 'total_equity'),
+        'Total Debt':                fm(bs_metrics, 'total_debt'),
+        'Current Assets':            fm(bs_metrics, 'current_assets'),
+        'Current Liabilities':       fm(bs_metrics, 'current_liab'),
+        'Cash And Cash Equivalents': fm(bs_metrics, 'cash'),
+        'Ordinary Shares Number':    fm(bs_metrics, 'shares_outstanding'),
+        'Net PPE':                   fm(bs_metrics, 'fixed_assets'),
+        'Net Receivables':           fm(bs_metrics, 'receivables'),
+        'Inventory':                 fm(bs_metrics, 'inventory'),
+    }
+
+    cashflow = {
+        'Operating Cash Flow': fm(cf_metrics, 'ocf'),
+        'Free Cash Flow':      fm(cf_metrics, 'fcf'),
+        'Capital Expenditure': fm(cf_metrics, 'capex'),
+        'Investing Cash Flow': fm(cf_metrics, 'investing_cf'),
+        'Financing Cash Flow': fm(cf_metrics, 'financing_cf'),
+    }
+
+    return {
+        'dates':    iso_dates,
+        'income':   income,
+        'balance':  balance,
+        'cashflow': cashflow,
+        'currency': currency,
+        '_source':  'excel_quarterly',
+    }
+
+
+# ---------- 年次→四半期フォーマット変換（フォールバック用） ----------
+
+def _build_quarterly_from_annual(ts_data, currency='JPY'):
+    """年次ts_dataから四半期タブ互換のquarterlyデータを生成する。
+    四半期シートがない場合のフォールバック。最新2年分のみ表示。"""
+    dates_raw = ts_data.get('dates', [])
+    if not dates_raw:
+        return None
+
+    # 最新2年分のみ
+    dates_raw = dates_raw[:2]
+
+    def to_iso(d):
+        s = str(d).strip()
+        if len(s) == 4 and s.isdigit():
+            return f"{s}-12-31"
+        if len(s) >= 10:
+            return s[:10]
+        if len(s) >= 7:
+            return s[:7] + '-28'
+        return s
+
+    iso_dates = [to_iso(d) for d in dates_raw]
+
+    revenue = ts_data.get('revenue', [])
+    op_income_ts = ts_data.get('op_income', [])
+    op_margin_ts = ts_data.get('op_margin', [])
+
+    N = 2  # 最新2年分のみ
+
+    def sl(key):
+        return list(ts_data.get(key, []))[:N]
+
+    if not any(v is not None for v in op_income_ts) and revenue and op_margin_ts:
+        op_income_ts = []
+        for i in range(max(len(revenue), len(op_margin_ts))):
+            rev = revenue[i] if i < len(revenue) else None
+            opm = op_margin_ts[i] if i < len(op_margin_ts) else None
+            if rev is not None and opm is not None:
+                op_income_ts.append(round(rev * opm / 100, 6))
+            else:
+                op_income_ts.append(None)
+    op_income_ts = op_income_ts[:N]
+
+    cogs_ts = ts_data.get('cogs', [])
+    gross_profit_ts = []
+    for i in range(min(N, max(len(revenue), len(cogs_ts)))):
+        rev = revenue[i] if i < len(revenue) else None
+        cogs = cogs_ts[i] if i < len(cogs_ts) else None
+        if rev is not None and cogs is not None:
+            gross_profit_ts.append(rev - cogs)
+        else:
+            gross_profit_ts.append(None)
+
+    income = {
+        'Total Revenue':    sl('revenue'),
+        'Net Income':       sl('net_income'),
+        'Operating Income': op_income_ts,
+        'EBITDA':           sl('ebitda'),
+        'Diluted EPS':      sl('eps'),
+        'Gross Profit':     gross_profit_ts,
+    }
+
+    balance = {
+        'Total Assets':              sl('total_assets'),
+        'Stockholders Equity':       sl('total_equity'),
+        'Total Debt':                sl('total_debt'),
+        'Current Assets':            [],
+        'Current Liabilities':       [],
+        'Cash And Cash Equivalents': [],
+        'Ordinary Shares Number':    [],
+    }
+
+    cashflow = {
+        'Operating Cash Flow': sl('ocf'),
+        'Free Cash Flow':      sl('fcf'),
+        'Capital Expenditure': sl('capex'),
+        'Investing Cash Flow': sl('investing_cf'),
+        'Financing Cash Flow': sl('financing_cf'),
+    }
+
+    return {
+        'dates':    iso_dates,
+        'income':   income,
+        'balance':  balance,
+        'cashflow': cashflow,
+        'currency': currency,
+        '_source':  'excel_annual',
+    }
 
 
 # ---------- メインパース関数 ----------
@@ -1526,11 +1762,19 @@ def parse_excel(filepath, currency='JPY'):
     ts_data["nonop_burden"] = nonop_burden_ts
     ts_data["tax_burden"] = tax_burden_ts
 
+    # op_income / cogs series（四半期タブ用）
+    ts_data["op_income"] = [g(op_income, i) for i in range(len(op_income))]
+    ts_data["cogs"] = [g(cogs_list, i) for i in range(len(cogs_list))]
+
     # Metadata for frontend scaling
     ts_data["_source"] = "excel"
     ts_data["_unit_scale"] = "millions"  # Data is already in millions
     ts_data["_is_jpy"] = False  # Prevent double-scaling in smartFormat
     ts_data["_currency"] = currency
+
+    # 四半期シートがあればそちらを優先、なければ年次2件でフォールバック
+    q = _parse_quarterly_excel(wb, currency=currency)
+    ts_data["quarterly"] = q if q is not None else _build_quarterly_from_annual(ts_data, currency=currency)
 
     return data, ts_data
 

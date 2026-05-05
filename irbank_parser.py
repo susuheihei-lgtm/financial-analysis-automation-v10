@@ -286,6 +286,147 @@ def parse_irbank(code: str, max_years: int = 10) -> tuple[dict, dict, dict, list
 
 # ── 四半期データ（HTMLスクレイピング） ────────────────────────────────────────
 
+_IQQ_METRIC_MAP: dict[str, list[str]] = {
+    # 内部キー → IR BANKの指標名キーワード（優先度順）
+    "revenue":    ["売上高", "営業収益", "収益", "Revenue", "Sales"],
+    "op_income":  ["営業利益"],
+    "net_income": ["利益(IFRS)", "当期利益", "純利益", "当期純利益", "最終利益"],
+}
+
+def _parse_iqq_value(text: str) -> float | None:
+    """'1.12兆+93.7%' / '3206億-0.2%' / '7.94兆' → float (yen)。'-' は None"""
+    if not text or text in ("-", "—", "－", "---"):
+        return None
+    # 前年比変化率 (+X% / -X%) を除去
+    text = re.sub(r"[+\-][0-9.]+%$", "", text).strip()
+    if not text or text in ("-", "—", "－"):
+        return None
+    units = [("兆", 1_000_000_000_000), ("億", 100_000_000), ("百万", 1_000_000), ("万", 10_000)]
+    for unit, mult in units:
+        if unit in text:
+            num_str = text.replace(unit, "").replace(",", "").strip()
+            try:
+                return float(num_str) * mult
+            except ValueError:
+                return None
+    try:
+        return float(text.replace(",", ""))
+    except ValueError:
+        return None
+
+
+def _scrape_quarterly_iqq(code: str, max_q: int = 12) -> dict | None:
+    """
+    irbank.net/{code}/quarter の「四半期毎の業績推移（QonQ）」テーブルを解析。
+    旧 _scrape_quarterly_html（四半期毎履歴テーブル）より列数が多く信頼性が高い。
+
+    Returns: parse_irbank_quarterly と同形式の dict, または None
+    """
+    if _BeautifulSoup is None:
+        return None
+
+    html = _fetch_html(f"https://irbank.net/{code}/quarter")
+    if not html:
+        return None
+
+    soup = _BeautifulSoup(html, "html.parser")
+
+    # 「四半期毎の業績推移」キャプション付きテーブルを検索
+    iqq_table = None
+    for t in soup.find_all("table"):
+        cap = t.find("caption")
+        if cap and "四半期毎の業績推移" in cap.get_text():
+            iqq_table = t
+            break
+    if iqq_table is None:
+        logger.info("IR BANK IQQ: %s — 業績推移テーブル未検出", code)
+        return None
+
+    rows = iqq_table.find_all("tr")
+
+    # 各四半期レコードを (date_str, metric, value) のリストで収集
+    records: dict[str, dict[str, float | None]] = {}  # date_str → {metric: value}
+    current_metric: str | None = None
+
+    def _detect_metric(cell_text: str) -> str | None:
+        for metric, keywords in _IQQ_METRIC_MAP.items():
+            if any(kw in cell_text for kw in keywords):
+                return metric
+        return None
+
+    def _register_fy_row(fy_str: str, q_vals: list[str]) -> None:
+        """'2025/03', ['1兆+16.7%', '0.84兆-27.4%', '1.19兆-2%', '-'] → records に登録"""
+        if not current_metric:
+            return
+        m = re.match(r"(\d{4})/(\d{1,2})", fy_str)
+        if not m:
+            return
+        fy_year, fy_month = int(m.group(1)), int(m.group(2))
+        for q_idx, raw in enumerate(q_vals[:4], start=1):
+            val = _parse_iqq_value(raw)
+            if val is None:
+                continue
+            date_str = _quarter_end_date(fy_year, fy_month, q_idx)
+            if date_str not in records:
+                records[date_str] = {}
+            records[date_str].setdefault(current_metric, val)  # 先着優先（重複は無視）
+
+    for row in rows:
+        cells = [td.get_text(strip=True) for td in row.find_all(["th", "td"])]
+        if not cells:
+            continue
+        c0 = cells[0]
+
+        # ヘッダー行（科目/年度/1Q …）はスキップ
+        if c0 in ("科目", ""):
+            continue
+
+        # 指標名行: cells[0]=指標名, cells[1]=YYYY/MM, cells[2..5]=1Q〜4Q
+        detected = _detect_metric(c0)
+        if detected is not None:
+            current_metric = detected
+            if len(cells) >= 6 and re.match(r"\d{4}/\d{1,2}", cells[1]):
+                _register_fy_row(cells[1], cells[2:6])
+            continue
+
+        # 年度継続行: cells[0]=YYYY/MM, cells[1..4]=1Q〜4Q
+        if re.match(r"\d{4}/\d{1,2}", c0) and len(cells) >= 5:
+            _register_fy_row(c0, cells[1:5])
+
+    if not records:
+        logger.info("IR BANK IQQ: %s — 実績データなし", code)
+        return None
+
+    # 新しい順にソートして max_q 件に絞る（未来予想日付を除外）
+    from datetime import date as _date
+    today_str = str(_date.today())
+    sorted_dates = sorted(
+        [d for d in records if d <= today_str],
+        reverse=True
+    )[:max_q]
+
+    if not sorted_dates:
+        return None
+
+    def _build(metric: str) -> list | None:
+        vals = [records[d].get(metric) for d in sorted_dates]
+        return vals if any(v is not None for v in vals) else None
+
+    income: dict[str, list] = {}
+    for src, dst in [("revenue", "Total Revenue"), ("op_income", "Operating Income"), ("net_income", "Net Income")]:
+        lst = _build(src)
+        if lst is not None:
+            income[dst] = lst
+
+    logger.info(
+        "IR BANK IQQ取得成功: %s (%dQ / %s〜%s)",
+        code, len(sorted_dates),
+        sorted_dates[-1] if sorted_dates else "-",
+        sorted_dates[0]  if sorted_dates else "-",
+    )
+    return {"dates": sorted_dates, "income": income, "balance": {}, "cashflow": {}}
+
+
 def _quarter_end_date(fy_year: int, fy_month: int, q: int) -> str:
     """FY終了年月とQ番号 → 四半期末日付 (YYYY-MM-DD)"""
     end_m = fy_month - (4 - q) * 3
@@ -516,7 +657,11 @@ def parse_irbank_quarterly(code: str, max_q: int = 8) -> dict | None:
         except Exception:
             pass
 
-    result = _scrape_quarterly_html(code, max_q=max_q)
+    # IQQ（業績推移テーブル）を優先、失敗時は旧パーサー（四半期毎履歴）にフォールバック
+    result = _scrape_quarterly_iqq(code, max_q=max_q)
+    if result is None:
+        logger.info("IR BANK IQQ失敗、旧パーサーにフォールバック: %s", code)
+        result = _scrape_quarterly_html(code, max_q=max_q)
     if result:
         try:
             cache_path.write_text(json.dumps(result, ensure_ascii=False), encoding="utf-8")

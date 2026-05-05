@@ -767,7 +767,7 @@ def parse_yfinance(ticker_symbol):
 
     if _is_japan and _jp_code and _parse_irbank is not None:
         try:
-            _irbank_data = _parse_irbank(_jp_code, max_years=5)
+            _irbank_data = _parse_irbank(_jp_code, max_years=4)
             if _irbank_data is not None:
                 logger.info("IR BANK データを使用: %s (code=%s)", ticker_symbol, _jp_code)
         except Exception as e:

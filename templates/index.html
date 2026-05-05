@@ -637,8 +637,8 @@
         <!-- Sub-tabs: [財務分析② 2年分析] [財務分析① 10年分析] -->
         <div class="mb-6 tab-nav-wrap">
           <nav class="flex gap-0 border-b" id="subTabNav" style="border-color:var(--border-s)">
-            <button class="sub-tab-btn sub-tab-active px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] border-b-2 transition-all whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace;border-color:var(--accent-v0)" data-subtab="quarterly" data-i18n="2-Year Analysis">1-Year Analysis</button>
-            <button class="sub-tab-btn px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] th-text-m border-b-2 border-transparent transition-all whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace" data-subtab="annual" data-i18n="10-Year Analysis">10-Year Analysis</button>
+            <button class="sub-tab-btn sub-tab-active px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] border-b-2 transition-all whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace;border-color:var(--accent-v0)" data-subtab="quarterly" data-i18n="Short-Term Analysis">Short-Term Analysis</button>
+            <button class="sub-tab-btn px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] th-text-m border-b-2 border-transparent transition-all whitespace-nowrap flex-shrink-0" style="font-family:'IBM Plex Mono','Courier New',monospace" data-subtab="annual" data-i18n="Long-Term Analysis">Long-Term Analysis</button>
           </nav>
         </div>
 
@@ -857,10 +857,15 @@
 
         </div><!-- /subtab-annual -->
 
-        <!-- subtab-quarterly: 2年分析 -->
+        <!-- subtab-quarterly: 短期財務分析 -->
         <div id="subtab-quarterly" class="sub-tab-content">
           <div id="quarterlyNoData" class="hidden text-center py-16">
             <p class="font-plex-mono text-[11px] th-text-m" data-i18n="Q no data msg">Quarterly data is only available for ticker-based analysis.</p>
+          </div>
+          <div id="quarterlyJPNotAvailable" class="hidden text-center py-20">
+            <p class="font-plex-mono text-[13px] font-bold tracking-[0.15em] uppercase mb-3" style="color:var(--accent-v0)">NOT AVAILABLE</p>
+            <p class="font-plex-mono text-[11px] th-text-m mb-2" data-i18n="JP short-term not available">日本株の短期財務分析は現在提供していません。</p>
+            <p class="font-plex-mono text-[10px] th-text-m opacity-60" data-i18n="JP short-term reason">IR BANKの四半期データは欠損・遅延が多く、信頼性が低いため。</p>
           </div>
           <div id="quarterlyChartContent" class="hidden">
             <!-- Q inner sub-tabs -->
@@ -1323,7 +1328,8 @@
       'Stock Price':        { ja: '株価チャート', en: 'Stock Price' },
       'Financial Analysis': { ja: '財務分析', en: 'Financial Analysis' },
       'Evaluation':         { ja: '評価', en: 'Evaluation' },
-      '10-Year Analysis':   { ja: '10年財務分析', en: '10-Year Analysis' },
+      'Long-Term Analysis':  { ja: '長期財務分析', en: 'Long-Term Analysis' },
+      'Short-Term Analysis': { ja: '短期財務分析', en: 'Short-Term Analysis' },
       'Quarterly (2Y)':     { ja: '直近2年・四半期', en: 'Quarterly (2Y)' },
       'Price Target':       { ja: '目標株価', en: 'Price Target' },
       'Income Statement':   { ja: '損益計算書', en: 'Income Statement' },
@@ -1357,8 +1363,8 @@
       // Chart period range buttons
       'MAX':                  { ja: '全期間', en: 'MAX' },
       // Sub-tab labels
-      '10-Year Analysis':     { ja: '10年財務分析', en: '10-Year Analysis' },
-      '2-Year Analysis':      { ja: '1年財務分析', en: '1-Year Analysis' },
+      'Long-Term Analysis':   { ja: '長期財務分析', en: 'Long-Term Analysis' },
+      'Short-Term Analysis':  { ja: '短期財務分析', en: 'Short-Term Analysis' },
       // Quarterly sub-tabs
       'Time Series Analysis': { ja: '時系列分析', en: 'Time Series Analysis' },
       'PBR Analysis (Q)':     { ja: 'PBR分析（四半期）', en: 'PBR Analysis (Q)' },
@@ -1378,7 +1384,9 @@
       'Operating CF':         { ja: '営業CF', en: 'Operating CF' },
       'Investing CF':         { ja: '投資CF', en: 'Investing CF' },
       'Financing CF':         { ja: '財務CF', en: 'Financing CF' },
-      'Q no data msg':        { ja: '四半期データはティッカー取得時のみ利用可能です。', en: 'Quarterly data is only available for ticker-based analysis.' },
+      'Q no data msg':                { ja: '四半期データはティッカー取得時のみ利用可能です。', en: 'Quarterly data is only available for ticker-based analysis.' },
+      'JP short-term not available':  { ja: '日本株の短期財務分析は現在提供していません。', en: 'Short-term analysis is not available for Japanese stocks.' },
+      'JP short-term reason':         { ja: 'IR BANKの四半期データは欠損・遅延が多く、信頼性が低いため。', en: 'IR BANK quarterly data has frequent gaps and delays, making it unreliable.' },
       // Select Metrics in Time Series
       'Select Metrics (TS)':  { ja: '指標を選択', en: 'Select Metrics' },
       'Show All':             { ja: '全指標を表示', en: 'Show All' },
@@ -3114,7 +3122,10 @@
       lastQTs = ts;
       const noDataEl = $('quarterlyNoData');
       const contentEl = $('quarterlyChartContent');
+      const jpNotAvailEl = $('quarterlyJPNotAvailable');
+      if (jpNotAvailEl) jpNotAvailEl.classList.add('hidden');
       Object.values(qCharts).forEach(c => c.destroy()); qCharts = {};
+
       if (!q || !q.dates || !q.dates.length) {
         if (noDataEl) noDataEl.classList.remove('hidden');
         if (contentEl) contentEl.classList.add('hidden');

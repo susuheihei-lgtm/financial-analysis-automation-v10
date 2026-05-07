@@ -3379,6 +3379,8 @@
       const q1YPBRChg = _qPBRv.length >= 2 ? _qPBRv[_qPBRv.length-1] - _qPBRv[0] : null;
       const _qPERv = qPER.filter(v => v != null);
       const q1YPERChg = _qPERv.length >= 2 ? _qPERv[_qPERv.length-1] - _qPERv[0] : null;
+      const _qROEv = qROE.filter(v => v != null);
+      const q1YROEChg = _qROEv.length >= 2 ? _qROEv[_qROEv.length-1] - _qROEv[0] : null;
 
       el.innerHTML = `
         <!-- PBR badge (top) -->
@@ -3436,6 +3438,7 @@
               <p class="text-3xl font-bold tabular-nums" style="font-family:'IBM Plex Mono','Courier New',monospace">${latestROE!=null?fmtNum(latestROE,1):'—'}<span class="text-lg th-text-m">%</span></p>
             </div>
             <p class="text-[10px] th-text-m mb-1">${t('roe-desc')}</p>
+            <p class="text-[11px] th-text-m mb-3">${t('1Y Change:')} <span class="${q1YROEChg>0?'text-green-400':q1YROEChg<0?'text-red-400':'th-text-m'}">${q1YROEChg!=null?((q1YROEChg>0?'+':'')+fmtNum(q1YROEChg,1)+'pt'):'—'}</span></p>
             <canvas id="qPBRROEChart" style="max-height:140px"></canvas>
           </div>
         </div>
